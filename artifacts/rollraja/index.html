@@ -674,12 +674,55 @@ input{font-family:'Lato',sans-serif;}
   .game-layout{grid-template-columns:1fr;}
   .game-sidebar{border-left:none;border-top:1px solid rgba(212,168,67,0.15);}
   .account-grid{grid-template-columns:1fr;}
-  .dice-area{gap:28px;}
-  .dice-scene{width:90px;height:90px;}
-  .face{width:90px;height:90px;border-radius:14px;}
-  .f-front{transform:translateZ(45px);}.f-back{transform:rotateY(180deg) translateZ(45px);}
-  .f-right{transform:rotateY(90deg) translateZ(45px);}.f-left{transform:rotateY(-90deg) translateZ(45px);}
-  .f-top{transform:rotateX(90deg) translateZ(45px);}.f-bottom{transform:rotateX(-90deg) translateZ(45px);}
+
+  /* ── Game table mobile fixes ── */
+  .game-main{padding:10px 8px;}
+  .game-topbar{height:50px;padding:0 14px;}
+  .casino-table-outer{margin-bottom:8px;}
+  .casino-table-rim{padding:10px;}
+  .table-controls{padding:8px 0 4px;}
+
+  /* Dice center zone: shrink so it doesn't clash with seats */
+  .dice-center-zone{width:168px;gap:4px;}
+  .dice-area{gap:12px;}
+  .die-label-text{display:none;}
+  .die-shadow-el{width:56px;height:10px;}
+  .die-result-val{font-size:13px;margin-top:2px;}
+
+  /* Dice cube: scale down for 60px cube inside 68px scene */
+  .dice-scene{width:68px;height:68px;}
+  .dice-cube{width:60px;height:60px;left:4px;top:4px;}
+  .iface{width:60px;height:60px;border-radius:12px;}
+  .iface.f-front{transform:translateZ(30px);}
+  .iface.f-back{transform:rotateY(180deg) translateZ(30px);}
+  .iface.f-right{transform:rotateY(90deg) translateZ(30px);}
+  .iface.f-left{transform:rotateY(-90deg) translateZ(30px);}
+  .iface.f-top{transform:rotateX(90deg) translateZ(30px);}
+  .iface.f-bottom{transform:rotateX(-90deg) translateZ(30px);}
+  .rpip{width:10px;height:10px;}
+  .crown-mark{font-size:7px;bottom:5px;right:6px;}
+
+  /* Show-face transforms stay the same (angle-based, not translateZ) */
+  /* Win/lose glow stays the same */
+
+  /* Seat cards: compact for mobile */
+  .seat-card{width:66px;padding:6px 7px;border-radius:10px;}
+  .seat-av{width:28px;height:28px;font-size:10px;margin-bottom:3px;}
+  .seat-name{font-size:7.5px;letter-spacing:0;}
+  .seat-balance{font-size:7.5px;}
+  .seat-role{font-size:6.5px;padding:1px 4px;margin-top:2px;}
+  .queue-badge{width:18px;height:18px;font-size:8px;top:-6px;right:-6px;}
+
+  /* VS overlay */
+  .vs-overlay{font-size:11px;padding:4px 12px;letter-spacing:1px;}
+
+  /* Result msg & roll button */
+  .result-msg{font-size:16px;letter-spacing:1px;margin-bottom:14px;}
+  .btn-roll{font-size:15px;padding:13px 36px;letter-spacing:2px;}
+  .roller-hint{font-size:10px;}
+
+  /* Waiting screen dice */
+  .waiting-3d-dice{width:110px;height:110px;}
 }
 </style>
 </head>
@@ -1230,7 +1273,7 @@ function renderPlayersRow(){
   // Get felt dimensions
   const feltEl=document.querySelector('.casino-table-felt');
   const feltSize=feltEl?feltEl.offsetWidth:440;
-  const seatRadius=feltSize*0.43;
+  const seatRadius=feltSize*(window.innerWidth<=720?0.46:0.43);
   const cx=feltSize/2, cy=feltSize/2;
 
   // My player always at bottom (angle = π/2)
