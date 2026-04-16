@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "RollRaja"
+version = "1.0.0"
+id = "artifacts/rollraja"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21015
+
+[services.development]
+run = "pnpm --filter @workspace/rollraja run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rollraja", "run", "build" ]
+publicDir = "artifacts/rollraja/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21015"
+BASE_PATH = "/"

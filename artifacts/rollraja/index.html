@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>RollRaja — Luxury Dice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Lato:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    <style>
+      @keyframes diceRoll {
+        0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+        15%  { transform: rotateX(200deg) rotateY(100deg) rotateZ(60deg); }
+        30%  { transform: rotateX(380deg) rotateY(200deg) rotateZ(120deg); }
+        50%  { transform: rotateX(520deg) rotateY(290deg) rotateZ(150deg); }
+        70%  { transform: rotateX(640deg) rotateY(330deg) rotateZ(165deg); }
+        85%  { transform: rotateX(700deg) rotateY(350deg) rotateZ(175deg); }
+        100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(180deg); }
+      }
+      @keyframes goldenPulse {
+        0%, 100% { box-shadow: 0 0 10px rgba(201,168,76,0.3); }
+        50%       { box-shadow: 0 0 25px rgba(201,168,76,0.7), 0 0 50px rgba(201,168,76,0.3); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
