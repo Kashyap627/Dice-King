@@ -84,12 +84,9 @@ input{font-family:'Lato',sans-serif;}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(212,168,67,0.5),inset 0 1px 0 rgba(255,255,255,0.2);}
 .btn-primary:active{transform:scale(0.98);}
 .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-.otp-row{margin-bottom:16px;}
-.otp-row input{width:100%;text-align:center;font-size:26px;font-weight:700;letter-spacing:8px;
-  background:rgba(0,0,0,0.4);border:1px solid rgba(212,168,67,0.3);border-radius:10px;
-  padding:14px;color:var(--gold2);outline:none;}
-.otp-demo{background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);
-  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--gold2);text-align:center;margin-bottom:16px;}
+.pass-show-wrap{position:relative;}
+.pass-show-wrap input{width:100%;}
+.pass-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:0;}
 .link-btn{background:none;border:none;color:var(--gold3);font-size:13px;text-decoration:underline;font-family:'Lato',sans-serif;}
 
 /* ══════════ APP SHELL ══════════ */
@@ -754,29 +751,55 @@ input{font-family:'Lato',sans-serif;}
       <div class="logo-sub">Premium Dice Experience</div>
       <div class="logo-divider"></div>
     </div>
-    <div class="login-card" id="login-step-phone">
-      <h2>Welcome</h2>
-      <p>Enter your mobile number to access the table</p>
+    <div class="login-card" id="login-step-login"><form onsubmit="doLogin();return false;" autocomplete="on">
+      <h2>Welcome Back</h2>
+      <p>Sign in to play at the table</p>
       <div class="field">
         <label>Mobile Number</label>
-        <input type="tel" id="phone-input" placeholder="+91 98765 43210" maxlength="15" onkeydown="if(event.key==='Enter')sendOTP()"/>
+        <input type="tel" id="login-phone" placeholder="+91 98765 43210" maxlength="15" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"/>
       </div>
-      <button class="btn-primary" onclick="sendOTP()">Request OTP</button>
-      <p style="font-size:11px;color:var(--text3);margin-top:14px;text-align:center;font-family:'Cinzel',serif;letter-spacing:0.5px;">New player? Account created automatically.</p>
+      <div class="field">
+        <label>Password</label>
+        <div class="pass-show-wrap">
+          <input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <button class="pass-toggle" type="button" onclick="togglePass('login-pass',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn-primary" type="submit">Enter the Table</button>
+      </form>
+      <p style="font-size:11px;color:var(--text3);margin-top:16px;text-align:center;font-family:'Cinzel',serif;letter-spacing:0.5px;">New here? <button class="link-btn" onclick="showRegister()">Create Account →</button></p>
     </div>
-    <div class="login-card" id="login-step-otp" style="display:none;">
-      <h2>Verify Identity</h2>
-      <p>Code sent to <span id="otp-phone-display" style="color:var(--gold2);"></span></p>
-      <div class="otp-demo" id="otp-demo-box"></div>
-      <div class="otp-row">
-        <input type="text" id="otp-in" maxlength="6" placeholder="• • • • • •" oninput="if(this.value.length===6)verifyOTP()"/>
+    <div class="login-card" id="login-step-register" style="display:none;"><form onsubmit="doRegister();return false;" autocomplete="on">
+      <h2>Create Account</h2>
+      <p>Join the table — ₹500 welcome bonus awaits</p>
+      <div class="field">
+        <label>Mobile Number</label>
+        <input type="tel" id="reg-phone" placeholder="+91 98765 43210" maxlength="15"/>
       </div>
-      <button class="btn-primary" onclick="verifyOTP()">Enter the Table</button>
+      <div class="field">
+        <label>Player Name</label>
+        <input type="text" id="reg-name" placeholder="Your name" maxlength="20"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="pass-show-wrap">
+          <input type="password" id="reg-pass" placeholder="Choose a password (min 4 chars)"/>
+          <button class="pass-toggle" type="button" onclick="togglePass('reg-pass',this)">&#128065;</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <div class="pass-show-wrap">
+          <input type="password" id="reg-pass2" placeholder="Repeat password" onkeydown="if(event.key==='Enter')doRegister()"/>
+          <button class="pass-toggle" type="button" onclick="togglePass('reg-pass2',this)">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn-primary" type="submit">Create Account</button>
+      </form>
       <div style="margin-top:14px;text-align:center;">
-        <button class="link-btn" onclick="backToPhone()">← Change number</button>
+        <button class="link-btn" onclick="showLogin()">← Back to Login</button>
       </div>
-    </div>
-  </div>
+    </div>  </div>
 </div>
 
 <!-- ════ APP ════ -->
@@ -1082,7 +1105,6 @@ const TABLE_DEFS=[
 ];
 let currentUser=null,gameState=null,rolling=false,notifications=[],simBotInterval=null;
 let playerAngles={};
-let generatedOTP='';
 let tableOccupancy={};
 
 function getBotColor(name){return COLORS[BOT_NAMES.indexOf(name)%COLORS.length]||COLORS[0];}
@@ -1100,33 +1122,54 @@ function getBotColor(name){return COLORS[BOT_NAMES.indexOf(name)%COLORS.length]|
   }
 })();
 
-function sendOTP(){
-  const ph=document.getElementById('phone-input').value.trim();
-  if(ph.length<8){showToast('Please enter a valid number','info');return;}
+function showRegister(){
+  document.getElementById('login-step-login').style.display='none';
+  document.getElementById('login-step-register').style.display='block';
   playSound('click');
-  generatedOTP=String(Math.floor(100000+Math.random()*900000));
-  document.getElementById('otp-phone-display').textContent=ph;
-  document.getElementById('otp-demo-box').textContent='🔑 Your OTP: '+generatedOTP+' (demo)';
-  document.getElementById('login-step-phone').style.display='none';
-  document.getElementById('login-step-otp').style.display='block';
 }
-function verifyOTP(){
-  const v=document.getElementById('otp-in').value.trim();
-  if(v!==generatedOTP){showToast('Invalid OTP','loss');return;}
-  playSound('win');
-  const ph=document.getElementById('phone-input').value.trim();
+function showLogin(){
+  document.getElementById('login-step-register').style.display='none';
+  document.getElementById('login-step-login').style.display='block';
+  playSound('click');
+}
+function togglePass(id,btn){
+  const el=document.getElementById(id);
+  const show=el.type==='password';
+  el.type=show?'text':'password';
+  btn.textContent=show?'🙈':'👁';
+}
+function doLogin(){
+  const ph=document.getElementById('login-phone').value.trim();
+  const pw=document.getElementById('login-pass').value;
+  if(ph.length<8){showToast('Enter a valid mobile number','info');return;}
+  if(!pw){showToast('Enter your password','info');return;}
+  playSound('click');
   const stored=localStorage.getItem('rr_user_'+ph);
-  currentUser=stored?JSON.parse(stored):{
-    phone:ph,name:'Player_'+ph.slice(-4),balance:500,
+  if(!stored){showToast('No account found — please register first','loss');return;}
+  const user=JSON.parse(stored);
+  if(user.password!==pw){showToast('Incorrect password','loss');return;}
+  playSound('win');
+  currentUser=user;
+  saveUser();enterApp();
+}
+function doRegister(){
+  const ph=document.getElementById('reg-phone').value.trim();
+  const nm=document.getElementById('reg-name').value.trim();
+  const pw=document.getElementById('reg-pass').value;
+  const pw2=document.getElementById('reg-pass2').value;
+  if(ph.length<8){showToast('Enter a valid mobile number','info');return;}
+  if(nm.length<2){showToast('Enter your player name','info');return;}
+  if(pw.length<4){showToast('Password must be at least 4 characters','info');return;}
+  if(pw!==pw2){showToast('Passwords do not match','loss');return;}
+  playSound('click');
+  if(localStorage.getItem('rr_user_'+ph)){showToast('Account already exists — please login','info');showLogin();return;}
+  currentUser={
+    phone:ph,name:nm,password:pw,balance:500,
     wins:0,losses:0,games:0,earned:0,
     transactions:[{type:'credit',label:'Welcome Bonus',amount:500,date:new Date().toLocaleDateString()}]
   };
+  playSound('win');
   saveUser();enterApp();
-}
-function backToPhone(){
-  document.getElementById('login-step-otp').style.display='none';
-  document.getElementById('login-step-phone').style.display='block';
-  document.getElementById('otp-in').value='';
 }
 function saveUser(){localStorage.setItem('rr_user_'+currentUser.phone,JSON.stringify(currentUser));}
 

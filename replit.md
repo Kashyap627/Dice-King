@@ -43,7 +43,7 @@ Luxury casino-style dice game. Two players roll dice showing only faces 1, 3, 4,
 
 #### Key Files
 - `src/App.tsx` — top-level screen router (login → lobby → game)
-- `src/components/LoginScreen.tsx` — OTP login (simulated, OTP shown on screen)
+- Login system: phone number + password (Register → Login flow, stored in localStorage)
 - `src/components/LobbyScreen.tsx` — table selection (Bronze/Silver/Gold/VIP)
 - `src/components/GameTable.tsx` — main game engine + table UI
 - `src/components/Dice.tsx` — 3D rectangular ivory dice with ring pips
