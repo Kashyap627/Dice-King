@@ -721,6 +721,71 @@ input{font-family:'Lato',sans-serif;}
   /* Waiting screen dice */
   .waiting-3d-dice{width:110px;height:110px;}
 }
+
+/* ═══════════ PRIVATE ROOM ═══════════ */
+.private-table-card{
+  background:linear-gradient(160deg,rgba(20,8,45,0.98),rgba(12,4,28,0.99));
+  border:1px solid rgba(180,130,255,0.35);
+  border-radius:var(--r2);padding:18px 22px;cursor:pointer;
+  display:flex;align-items:center;gap:16px;
+  transition:all 0.3s;position:relative;overflow:hidden;margin-bottom:16px;}
+.private-table-card:hover{border-color:rgba(180,130,255,0.7);transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(140,90,255,0.25);}
+.ptc-icon{font-size:30px;flex-shrink:0;}
+.ptc-info{flex:1;}
+.ptc-name{font-family:'Cinzel',serif;font-size:15px;color:#c8a0ff;margin-bottom:3px;}
+.ptc-desc{font-size:11px;color:var(--text3);}
+.ptc-arrow{font-size:18px;color:rgba(180,130,255,0.45);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9000;
+  display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-box{background:linear-gradient(160deg,#0f2814,#081609);
+  border:1px solid rgba(212,168,67,0.3);border-radius:24px;padding:28px;
+  max-width:420px;width:100%;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;
+  color:var(--text3);font-size:20px;cursor:pointer;line-height:1;}
+.modal-close:hover{color:var(--text);}
+.modal-title{font-family:'Cinzel',serif;font-size:19px;color:var(--gold2);
+  text-align:center;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px;}
+.modal-tabs{display:flex;border:1px solid rgba(212,168,67,0.2);border-radius:10px;
+  margin-bottom:20px;overflow:hidden;}
+.modal-tab{flex:1;padding:10px 8px;text-align:center;font-family:'Cinzel',serif;
+  font-size:11px;letter-spacing:1px;cursor:pointer;color:var(--text3);
+  transition:all 0.25s;border:none;background:none;}
+.modal-tab.active{background:rgba(212,168,67,0.15);color:var(--gold2);}
+.bet-selector{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.bet-opt{flex:1;min-width:58px;padding:10px 4px;border:1px solid rgba(212,168,67,0.2);
+  border-radius:10px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;
+  font-size:13px;color:var(--text3);transition:all 0.25s;background:none;}
+.bet-opt.selected{border-color:var(--gold);background:rgba(212,168,67,0.15);color:var(--gold2);}
+.room-code-display{background:rgba(212,168,67,0.08);border:2px dashed rgba(212,168,67,0.4);
+  border-radius:14px;padding:20px;text-align:center;margin:14px 0;}
+.room-code-text{font-family:'Cinzel',serif;font-size:34px;font-weight:700;
+  color:var(--gold2);letter-spacing:10px;}
+.room-code-label{font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:2px;}
+.room-share-btns{display:flex;gap:8px;margin-bottom:14px;}
+.room-share-btn{flex:1;padding:9px 6px;font-size:11px;font-family:'Cinzel',serif;
+  letter-spacing:0.5px;cursor:pointer;background:rgba(212,168,67,0.1);
+  border:1px solid rgba(212,168,67,0.25);border-radius:10px;color:var(--gold2);
+  transition:all 0.25s;}
+.room-share-btn:hover{background:rgba(212,168,67,0.2);}
+.room-players-label{font-size:10px;color:var(--text3);font-family:'Cinzel',serif;
+  letter-spacing:1.5px;margin-bottom:8px;}
+.room-players-list{max-height:160px;overflow-y:auto;margin-bottom:14px;}
+.room-player-row{display:flex;align-items:center;gap:10px;padding:8px 10px;
+  background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:5px;}
+.room-player-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+.room-player-name{font-size:13px;color:var(--text);flex:1;}
+.room-player-badge{font-size:9px;letter-spacing:1px;font-family:'Cinzel',serif;
+  padding:2px 6px;border-radius:4px;}
+.badge-host{color:var(--gold3);background:rgba(212,168,67,0.1);}
+.badge-me{color:#6ab8f7;background:rgba(100,180,255,0.1);}
+.waiting-pulse{animation:wpulse 1.6s ease-in-out infinite;}
+@keyframes wpulse{0%,100%{opacity:1}50%{opacity:0.35}}
+.room-waiting-msg{text-align:center;padding:12px;color:var(--text3);font-size:12px;
+  font-family:'Cinzel',serif;letter-spacing:0.5px;}
+
 </style>
 </head>
 <body>
@@ -1177,6 +1242,7 @@ function saveUser(){localStorage.setItem('rr_user_'+currentUser.phone,JSON.strin
 //  APP
 // ═══════════════════════════════════
 function enterApp(){
+  setTimeout(checkUrlRoomParam,700);
   document.getElementById('screen-login').classList.remove('active');
   document.getElementById('screen-app').classList.add('active');
   document.getElementById('user-avatar').textContent=currentUser.name.slice(0,2).toUpperCase();
@@ -1198,6 +1264,9 @@ function toggleNotif(){document.getElementById('notif-dot').style.display='none'
 // ═══════════════════════════════════
 function renderLobby(){
   const g=document.getElementById('tables-grid');g.innerHTML='';
+  var ptc=document.createElement('div');ptc.className='private-table-card';ptc.style='grid-column:1/-1';ptc.setAttribute('onclick','openPrivateRoomModal()');
+  ptc.innerHTML='<span class="ptc-icon">🔒</span><div class="ptc-info"><div class="ptc-name">Private Table</div><div class="ptc-desc">Create a room &amp; invite friends · Unlimited players · Custom bet</div></div><span class="ptc-arrow">→</span>';
+  g.appendChild(ptc);
   TABLE_DEFS.forEach(t=>{
     if(!tableOccupancy[t.id]) tableOccupancy[t.id]=Math.floor(Math.random()*3);
     const occ=tableOccupancy[t.id];
@@ -1814,6 +1883,260 @@ function spawnConfetti(){
     c.appendChild(el);setTimeout(()=>el.remove(),5000);
   }
 }
+
+// ══════════════════════════════════════
+// PRIVATE ROOM FEATURE
+// ══════════════════════════════════════
+let privateRoomState=null;
+let selectedPrivateBet=50;
+
+function openPrivateRoomModal(){
+  playSound('click');
+  var params=new URLSearchParams(window.location.search);
+  var urlCode=params.get('room');
+  if(urlCode&&urlCode.length>=4){
+    switchRoomTab('join');
+    document.getElementById('join-code-input').value=urlCode.toUpperCase();
+  } else {
+    switchRoomTab('create');
+  }
+  document.getElementById('private-room-modal').style.display='flex';
+}
+
+function closePrivateModal(){
+  document.getElementById('private-room-modal').style.display='none';
+  if(privateRoomState&&privateRoomState.pollingId){
+    clearInterval(privateRoomState.pollingId);privateRoomState=null;
+  }
+}
+
+function switchRoomTab(tab){
+  ['create','join'].forEach(function(t){
+    document.getElementById('ptab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('ppanel-'+t).style.display=t===tab?'':'none';
+  });
+  document.getElementById('ppanel-lobby').style.display='none';
+}
+
+function selectPrivateBet(amt){
+  selectedPrivateBet=amt;
+  document.querySelectorAll('.bet-opt').forEach(function(el){
+    el.classList.toggle('selected',el.dataset.bet===String(amt));
+  });
+}
+
+async function createPrivateRoom(){
+  if(!currentUser)return;
+  if(currentUser.balance<selectedPrivateBet){showToast('Insufficient balance','loss');return;}
+  playSound('chip');
+  try{
+    var res=await fetch('/api/rooms',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({bet:selectedPrivateBet,hostName:currentUser.name,hostPhone:currentUser.phone})
+    });
+    var data=await res.json();
+    if(!data.room){showToast('Failed to create room','loss');return;}
+    showRoomLobby(data.room,true);
+  }catch(e){showToast('Could not connect — try again','loss');}
+}
+
+async function joinPrivateRoom(){
+  var code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  if(code.length<4){showToast('Enter a valid room code','info');return;}
+  playSound('click');
+  try{
+    var res=await fetch('/api/rooms/'+code+'/join',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:currentUser.name,phone:currentUser.phone})
+    });
+    if(res.status===404){showToast('Room not found — check the code','loss');return;}
+    var room=await res.json();
+    showRoomLobby(room,false);
+  }catch(e){showToast('Could not connect — try again','loss');}
+}
+
+function showRoomLobby(room,isHost){
+  if(privateRoomState&&privateRoomState.pollingId)clearInterval(privateRoomState.pollingId);
+  privateRoomState={code:room.code,bet:room.bet,isHost:isHost,pollingId:null};
+  ['create','join'].forEach(function(t){document.getElementById('ppanel-'+t).style.display='none';});
+  document.getElementById('ppanel-lobby').style.display='';
+  document.getElementById('prm-code').textContent=room.code;
+  document.getElementById('prm-bet').textContent=room.bet;
+  document.getElementById('prm-start-btn').style.display=isHost?'':'none';
+  document.getElementById('prm-wait-msg').style.display=isHost?'none':'';
+  renderRoomPlayers(room.players,room.host);
+  privateRoomState.pollingId=setInterval(async function(){
+    try{
+      var res=await fetch('/api/rooms/'+room.code);
+      if(!res.ok){clearInterval(privateRoomState.pollingId);return;}
+      var updated=await res.json();
+      renderRoomPlayers(updated.players,updated.host);
+      if(!isHost&&updated.state==='playing'){
+        clearInterval(privateRoomState.pollingId);
+        document.getElementById('private-room-modal').style.display='none';
+        enterPrivateGame(updated);
+      }
+    }catch(e){}
+  },2000);
+}
+
+function renderRoomPlayers(players,hostPhone){
+  var list=document.getElementById('prm-players');
+  var cnt=document.getElementById('prm-count');
+  if(!list||!cnt)return;
+  cnt.textContent='('+players.length+')';
+  list.innerHTML=players.map(function(p,i){
+    return '<div class="room-player-row">'
+      +'<div class="room-player-av" style="background:'+COLORS[i%COLORS.length]+'">'+((p.name[0]||'?').toUpperCase())+'</div>'
+      +'<div class="room-player-name">'+p.name+'</div>'
+      +(p.phone===hostPhone?'<span class="room-player-badge badge-host">HOST</span>':'')
+      +(p.phone===currentUser.phone?'<span class="room-player-badge badge-me">YOU</span>':'')
+      +'</div>';
+  }).join('');
+  if(privateRoomState&&privateRoomState.isHost){
+    var btn=document.getElementById('prm-start-btn');
+    if(btn)btn.style.opacity=players.length>=2?'1':'0.5';
+  }
+}
+
+function copyRoomCode(){
+  if(!privateRoomState)return;
+  navigator.clipboard.writeText(privateRoomState.code)
+    .then(function(){showToast('Room code copied!','info');})
+    .catch(function(){showToast('Code: '+privateRoomState.code,'info');});
+}
+
+function copyRoomLink(){
+  if(!privateRoomState)return;
+  var url=window.location.origin+window.location.pathname+'?room='+privateRoomState.code;
+  navigator.clipboard.writeText(url)
+    .then(function(){showToast('Room link copied!','info');})
+    .catch(function(){showToast('Share code: '+privateRoomState.code,'info');});
+}
+
+async function startPrivateGame(){
+  if(!privateRoomState||!privateRoomState.isHost)return;
+  try{
+    var res=await fetch('/api/rooms/'+privateRoomState.code);
+    var room=await res.json();
+    if(room.players.length<2){showToast('Need at least 2 players to start','info');return;}
+    playSound('chip');
+    await fetch('/api/rooms/'+privateRoomState.code,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({state:'playing'})
+    });
+    clearInterval(privateRoomState.pollingId);
+    document.getElementById('private-room-modal').style.display='none';
+    enterPrivateGame(room);
+  }catch(e){showToast('Could not start game','loss');}
+}
+
+function enterPrivateGame(room){
+  var t={id:'private_'+room.code,name:'\uD83D\uDD12 Room '+room.code,
+    icon:'\uD83D\uDD12',bet:room.bet,maxPlayers:100,isPrivate:true};
+  if(currentUser.balance<t.bet){showToast('Insufficient balance','loss');return;}
+  playSound('chip');
+  initGameState(t);
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-game').classList.add('active');
+  document.getElementById('game-table-name').textContent=t.name;
+  document.getElementById('game-bet-display').textContent='\u20B9'+t.bet;
+  renderGameScreen();
+  var others=room.players.filter(function(p){return p.phone!==currentUser.phone;});
+  others.forEach(function(p,i){
+    setTimeout(function(){
+      if(!gameState)return;
+      if(gameState.players.find(function(x){return x.name===p.name;}))return;
+      gameState.players.push({name:p.name,colorHex:COLORS[(i+1)%COLORS.length],
+        balance:500+Math.floor(Math.random()*500),isMe:false,isBot:false});
+      addNotif(p.name+' joined the table','info');
+      playSound('notify');
+      renderWaitingPlayers();checkWaiting();
+    },400*(i+1));
+  });
+  if(room.players.length<3){
+    var botsNeeded=3-room.players.length;
+    for(var i=0;i<botsNeeded;i++){
+      (function(idx){setTimeout(function(){addBot(idx+others.length);},
+        400*(others.length+idx+1)+600);})(i);
+    }
+  }
+  checkWaiting();
+}
+
+async function leavePrivateRoom(){
+  if(!privateRoomState)return;
+  if(privateRoomState.pollingId)clearInterval(privateRoomState.pollingId);
+  try{
+    await fetch('/api/rooms/'+privateRoomState.code+'/leave',{
+      method:'DELETE',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:currentUser.phone})
+    });
+  }catch(e){}
+  privateRoomState=null;
+  document.getElementById('private-room-modal').style.display='none';
+}
+
+function checkUrlRoomParam(){
+  var params=new URLSearchParams(window.location.search);
+  var code=params.get('room');
+  if(code&&code.length>=4&&currentUser){openPrivateRoomModal();}
+}
+
 </script>
+
+<!-- ═══ PRIVATE ROOM MODAL ═══ -->
+<div class="modal-overlay" id="private-room-modal" style="display:none;" onclick="if(event.target===this)closePrivateModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePrivateModal()">&#x2715;</button>
+    <div class="modal-title">&#128274; Private Table</div>
+    <div class="modal-sub">Create a room &middot; Share the code &middot; Play together</div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="ptab-create" onclick="switchRoomTab('create')">Create Room</button>
+      <button class="modal-tab" id="ptab-join" onclick="switchRoomTab('join')">Join Room</button>
+    </div>
+    <div id="ppanel-create">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:10px;font-family:'Cinzel',serif;letter-spacing:1.5px;">SELECT BET AMOUNT</div>
+      <div class="bet-selector">
+        <div class="bet-opt" onclick="selectPrivateBet(10)" data-bet="10">&#8377;10</div>
+        <div class="bet-opt selected" onclick="selectPrivateBet(50)" data-bet="50">&#8377;50</div>
+        <div class="bet-opt" onclick="selectPrivateBet(100)" data-bet="100">&#8377;100</div>
+        <div class="bet-opt" onclick="selectPrivateBet(500)" data-bet="500">&#8377;500</div>
+      </div>
+      <button class="btn-primary" onclick="createPrivateRoom()">Create Room</button>
+    </div>
+    <div id="ppanel-join" style="display:none;">
+      <div class="field">
+        <label>Room Code</label>
+        <input type="text" id="join-code-input" placeholder="ABCDEF" maxlength="6"
+          style="text-transform:uppercase;letter-spacing:6px;font-size:22px;text-align:center;"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+          onkeydown="if(event.key==='Enter')joinPrivateRoom()"/>
+      </div>
+      <button class="btn-primary" onclick="joinPrivateRoom()">Join Room</button>
+    </div>
+    <div id="ppanel-lobby" style="display:none;">
+      <div class="room-code-display">
+        <div class="room-code-text" id="prm-code">------</div>
+        <div class="room-code-label">ROOM CODE &middot; BET &#8377;<span id="prm-bet">0</span> per round</div>
+      </div>
+      <div class="room-share-btns">
+        <button class="room-share-btn" onclick="copyRoomCode()">&#128203; Copy Code</button>
+        <button class="room-share-btn" onclick="copyRoomLink()">&#128279; Copy Link</button>
+      </div>
+      <div class="room-players-label">PLAYERS IN ROOM <span id="prm-count">(0)</span></div>
+      <div class="room-players-list" id="prm-players"></div>
+      <div id="prm-start-btn" style="display:none;">
+        <button class="btn-primary" onclick="startPrivateGame()">Start Game &#8594;</button>
+        <p style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;">Minimum 2 players required</p>
+      </div>
+      <div id="prm-wait-msg" class="room-waiting-msg waiting-pulse">Waiting for host to start the game&#8230;</div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="link-btn" onclick="leavePrivateRoom()">Leave Room</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
