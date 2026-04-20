@@ -1930,7 +1930,7 @@ async function createPrivateRoom(){
   if(currentUser.balance<selectedPrivateBet){showToast('Insufficient balance','loss');return;}
   playSound('chip');
   try{
-    var res=await fetch('/api/rooms',{
+    var res=await fetch('/_rooms',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({bet:selectedPrivateBet,hostName:currentUser.name,hostPhone:currentUser.phone})
     });
@@ -1945,7 +1945,7 @@ async function joinPrivateRoom(){
   if(code.length<4){showToast('Enter a valid room code','info');return;}
   playSound('click');
   try{
-    var res=await fetch('/api/rooms/'+code+'/join',{
+    var res=await fetch('/_rooms/'+code+'/join',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name:currentUser.name,phone:currentUser.phone})
     });
@@ -1967,7 +1967,7 @@ function showRoomLobby(room,isHost){
   renderRoomPlayers(room.players,room.host);
   privateRoomState.pollingId=setInterval(async function(){
     try{
-      var res=await fetch('/api/rooms/'+room.code);
+      var res=await fetch('/_rooms/'+room.code);
       if(!res.ok){clearInterval(privateRoomState.pollingId);return;}
       var updated=await res.json();
       renderRoomPlayers(updated.players,updated.host);
@@ -2017,11 +2017,11 @@ function copyRoomLink(){
 async function startPrivateGame(){
   if(!privateRoomState||!privateRoomState.isHost)return;
   try{
-    var res=await fetch('/api/rooms/'+privateRoomState.code);
+    var res=await fetch('/_rooms/'+privateRoomState.code);
     var room=await res.json();
     if(room.players.length<2){showToast('Need at least 2 players to start','info');return;}
     playSound('chip');
-    await fetch('/api/rooms/'+privateRoomState.code,{
+    await fetch('/_rooms/'+privateRoomState.code,{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({state:'playing'})
     });
@@ -2068,7 +2068,7 @@ async function leavePrivateRoom(){
   if(!privateRoomState)return;
   if(privateRoomState.pollingId)clearInterval(privateRoomState.pollingId);
   try{
-    await fetch('/api/rooms/'+privateRoomState.code+'/leave',{
+    await fetch('/_rooms/'+privateRoomState.code+'/leave',{
       method:'DELETE',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:currentUser.phone})
     });

@@ -46,14 +46,14 @@ const roomsApiPlugin: Plugin = {
   configureServer(server) {
     server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
       const url = req.url ?? "";
-      if (!url.startsWith("/api/rooms")) return next();
+      if (!url.startsWith("/_rooms")) return next();
 
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Access-Control-Allow-Origin", "*");
 
       if (req.method === "OPTIONS") { res.statusCode = 200; res.end(); return; }
 
-      const tail = url.replace(/^\/api\/rooms\/?/, "");
+      const tail = url.replace(/^\/_rooms\/?/, "");
       const parts = tail.split("/").filter(Boolean);
 
       let body = "";
