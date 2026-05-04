@@ -12,13 +12,12 @@ import {
 interface GameTableProps {
   user: StoredUser;
   tableTier: TableTier;
-  roomId: string;
   onLeave: (finalBalance: number) => void;
-  onRoomFull: (currentRoomId: string) => void;
   onUpdateBalance: (newBalance: number) => void;
 }
 
-export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull, onUpdateBalance }: GameTableProps) {
+export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }: GameTableProps) {
+  const roomId = `tier_${tableTier}`;
   const betAmount = TABLE_BETS[tableTier];
 
   const {
@@ -30,7 +29,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
     challengerPlayer,
     roll,
     placeSideBet,
-    leaveRoom,
+    leaveRoom
   } = useRealtimeRoom({
     roomId,
     userId: user.id,
@@ -43,6 +42,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
   const [sideBetTarget, setSideBetTarget] = useState<string>('');
   const [sideBetAmount, setSideBetAmount] = useState<number>(betAmount);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const feltRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,9 +51,13 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
   const [playerAngles, setPlayerAngles] = useState<Record<string, { x: number; y: number; angle: number }>>({});
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     // Generate seat positions identically to the prototype but using percentages for responsiveness
     const n = Math.max(state.players.length, 1);
-    const seatRadius = 38; // percentage (reduced from 43 to avoid overlap)
+    const seatRadius = 43; // percentage
     const myIdx = Math.max(0, state.players.findIndex(p => p.isMe));
 
     const newAngles: Record<string, { x: number; y: number; angle: number }> = {};
@@ -68,17 +72,6 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
     });
     setPlayerAngles(newAngles);
   }, [state.players]);
-
-  // Room occupancy check
-  useEffect(() => {
-    if (state.players.length > 6) {
-      const myIdx = state.players.findIndex(p => p.id === user.id);
-      if (myIdx >= 6) {
-        // We are the 7th+ player, move to next room
-        onRoomFull(roomId);
-      }
-    }
-  }, [state.players, user.id, roomId, onRoomFull]);
 
   // Audio bindings based on state changes
   useEffect(() => {
@@ -189,8 +182,8 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
   };
 
   // Render waiting room
-  if (state.phase === 'waiting' || state.phase === 'countdown') {
-    const progress = Math.min(100, (state.players.length / 6) * 100);
+  if (state.phase === 'waiting') {
+    const progress = (state.players.length / 2) * 100;
     return (
       <div className="screen active" id="screen-game" style={{ display: 'flex', flexDirection: 'column' }}>
         <Toast toasts={toasts} />
@@ -250,7 +243,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
               <div className="waiting-title">Awaiting Players</div>
               <div className="waiting-text">The table requires at least 2 players to begin.</div>
               <div className="waiting-players">
-                {Array.from({ length: 6 }).map((_, i) => {
+                {Array.from({ length: 2 }).map((_, i) => {
                   const p = state.players[i];
                   if (p) {
                     return (
@@ -270,8 +263,8 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
                 })}
               </div>
               <div className="prog-track"><div className="prog-fill" style={{ width: `${progress}%` }}></div></div>
-              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: 'var(--text3)', marginBottom: 16 }}>
-                {state.players.length} / 6 players
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: 'var(--text3)' }}>
+                {state.players.length} / 2 players
               </div>
             </div>
           </div>
@@ -352,6 +345,12 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
                     )}
                   </div>
 
+                  <div className="vs-overlay">
+                    <span className="vs-name">{winnerPlayer?.name || '—'}</span>
+                    <span className="vs-sep">VS</span>
+                    <span className="vs-name">{challengerPlayer?.name || '—'}</span>
+                  </div>
+
                   {/* Player Seats */}
                   <div className="game-players-row" style={{ position: 'absolute', inset: 0, borderRadius: '50%', pointerEvents: 'none' }}>
                     {state.players.map((p) => {
@@ -363,7 +362,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
                       const roleClass = isRoller && (state.phase === 'playing' || state.phase === 'rolling') ? 'rolling' : (isWinner || isChall) ? 'playing' : '';
                       const winnerClass = state.phase === 'between' && state.lastWinnerId === p.id ? 'winner-card' : state.phase === 'between' && state.lastLoserId === p.id ? 'loser-card' : '';
                       
-                      const qIdx = state.queueIds.indexOf(p.id);
+                      const qIdx = state.queue.findIndex(idx => state.players[idx]?.id === p.id);
                       let roleLabel = '';
                       if (isRoller) roleLabel = 'Rolling';
                       else if (isWinner || isChall) roleLabel = 'In Play';
@@ -373,12 +372,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
                         <div 
                           key={p.id} 
                           className="player-seat" 
-                          style={{ 
-                            left: `${pos.x.toFixed(2)}%`, 
-                            top: `${pos.y.toFixed(2)}%`, 
-                            pointerEvents: 'auto',
-                            transform: 'translate(-50%, -50%)'
-                          }}
+                          style={{ left: `${pos.x.toFixed(2)}%`, top: `${pos.y.toFixed(2)}%`, pointerEvents: 'auto' }}
                         >
                           <div className={`seat-card ${roleClass} ${winnerClass}`}>
                             {qIdx >= 0 && <div className="queue-badge">{qIdx + 1}</div>}
@@ -476,7 +470,7 @@ export default function GameTable({ user, tableTier, roomId, onLeave, onRoomFull
       {/* OVERLAY */}
       {state.phase === 'between' && state.lastWinnerId && (
         <div className="overlay active">
-          {state.lastWinnerId === user.id && (
+          {isMounted && state.lastWinnerId === user.id && (
             <div className="confetti-container">
               {Array.from({ length: 40 }).map((_, i) => (
                 <div 

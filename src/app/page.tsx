@@ -13,7 +13,6 @@ export default function DiceKingPage() {
   const [screen, setScreen] = useState<AppScreen>('login');
   const [user, setUser] = useState<StoredUser | null>(null);
   const [tableTier, setTableTier] = useState<TableTier>('bronze');
-  const [roomId, setRoomId] = useState<string>('');
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -65,19 +64,7 @@ export default function DiceKingPage() {
 
   function handleJoinTable(tier: TableTier) {
     setTableTier(tier);
-    setRoomId(`tier_${tier}_1`);
     setScreen('game');
-  }
-
-  function handleRoomFull(currentRoomId: string) {
-    // Extract room number and increment it
-    const parts = currentRoomId.split('_');
-    const num = parseInt(parts[parts.length - 1]);
-    const nextNum = num + 1;
-    const nextRoomId = [...parts.slice(0, -1), nextNum].join('_');
-    
-    setRoomId(nextRoomId);
-    // The GameTable will re-render and join the new room automatically
   }
 
   function handleLeaveTable(finalBalance: number) {
@@ -111,9 +98,7 @@ export default function DiceKingPage() {
     <GameTable
       user={user}
       tableTier={tableTier}
-      roomId={roomId}
       onLeave={handleLeaveTable}
-      onRoomFull={handleRoomFull}
       onUpdateBalance={handleUpdateBalance}
     />
   );

@@ -130,6 +130,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
+              suppressHydrationWarning
             />
           </div>
 
@@ -141,6 +142,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              suppressHydrationWarning
             />
           </div>
 

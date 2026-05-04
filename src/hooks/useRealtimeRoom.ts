@@ -146,7 +146,7 @@ export function useRealtimeRoom({
     });
   }, []);
 
-  // ─── Host: Auto-Start Game when >= 2 players ───
+  // ─── Host: Start game when ≥2 players ───
   useEffect(() => {
     if (isHost && state.phase === 'waiting' && state.players.length >= 2) {
       const timer = setTimeout(() => {
@@ -163,15 +163,15 @@ export function useRealtimeRoom({
     if (s.phase !== 'playing' && s.phase !== 'result') return;
 
     // Determine who should roll
-    const rollerId = state.currentRollerIsWinner ? state.winnerId : state.queueIds[0];
-    if (!rollerId) return;
-    const roller = state.players.find(p => p.id === rollerId);
+    const rollerIdx = s.currentRollerIsWinner ? s.winnerIdx : s.queue[0];
+    if (rollerIdx === undefined) return;
+    const roller = s.players[rollerIdx];
     if (!roller || roller.id !== userId) return;
 
     // Collect bets first if not collected
-    if (!state.potCollected) {
-      const pA = state.players.find(p => p.id === state.winnerId);
-      const pB = state.players.find(p => p.id === state.queueIds[0]);
+    if (!s.potCollected) {
+      const pA = s.players[s.winnerIdx];
+      const pB = s.players[s.queue[0]];
       if (!pA || !pB) return;
 
       try {
@@ -228,17 +228,17 @@ export function useRealtimeRoom({
   const resolveRoll = useCallback(async (d1: DiceFace, d2: DiceFace) => {
     const s = stateRef.current;
     const outcome = evaluateRoll([d1, d2]);
-    const rollerId = s.currentRollerIsWinner ? s.winnerId : s.queueIds[0];
-    const oppId = s.currentRollerIsWinner ? s.queueIds[0] : s.winnerId;
+    const rollerIdx = s.currentRollerIsWinner ? s.winnerIdx : s.queue[0];
+    const oppIdx = s.currentRollerIsWinner ? s.queue[0] : s.winnerIdx;
 
-    if (!rollerId || !oppId) return;
+    if (rollerIdx === undefined || oppIdx === undefined) return;
 
     if (outcome === 'win') {
       // Roller wins
-      await awardWin(rollerId, oppId, s);
+      await awardWin(rollerIdx, oppIdx, s);
     } else if (outcome === 'loss') {
       // Roller loses — opponent wins
-      await awardWin(oppId, rollerId, s);
+      await awardWin(oppIdx, rollerIdx, s);
     } else {
       // No double — swap roller
       const newNoDouble = s.noDoubleCount + 1;
@@ -246,7 +246,7 @@ export function useRealtimeRoom({
       if (newNoDouble >= MAX_NO_DOUBLES) {
         // Force roller wins after too many no-doubles
         broadcast({ type: 'ADD_NOTIFICATION', msg: `${MAX_NO_DOUBLES} no-doubles! Roller wins by default!`, notifType: 'win' });
-        await awardWin(rollerId, oppId, s);
+        await awardWin(rollerIdx, oppIdx, s);
         return;
       }
 
@@ -255,15 +255,23 @@ export function useRealtimeRoom({
 
       // Auto-roll for next player after delay
       setTimeout(() => {
-        broadcast({ type: 'SET_PHASE', phase: 'playing' });
+        const latest = stateRef.current;
+        const nextRollerIdx = latest.currentRollerIsWinner ? latest.winnerIdx : latest.queue[0];
+        const nextRoller = latest.players[nextRollerIdx];
+        if (nextRoller && nextRoller.id === userId) {
+          // It's my turn — the UI will show the roll button
+          broadcast({ type: 'SET_PHASE', phase: 'playing' });
+        } else {
+          broadcast({ type: 'SET_PHASE', phase: 'playing' });
+        }
       }, 3000);
     }
   }, [userId, broadcast, onBalanceChange, roomId]);
 
   // ─── Award Win ───
-  const awardWin = useCallback(async (winnerId: string, loserId: string, s: MPGameState) => {
-    const winner = s.players.find(p => p.id === winnerId);
-    const loser = s.players.find(p => p.id === loserId);
+  const awardWin = useCallback(async (winnerIdx: number, loserIdx: number, s: MPGameState) => {
+    const winner = s.players[winnerIdx];
+    const loser = s.players[loserIdx];
     if (!winner || !loser) return;
 
     const winAmount = s.pot;
@@ -274,7 +282,6 @@ export function useRealtimeRoom({
         p_user_id: winner.id,
         p_amount: winAmount,
         p_label: `Won vs ${loser.name}`,
-        p_room_id: roomId,
       });
       if (result.data !== null) {
         broadcast({ type: 'UPDATE_BALANCE', playerId: winner.id, newBalance: Number(result.data) });
@@ -293,20 +300,14 @@ export function useRealtimeRoom({
 
     // Advance round after delay
     setTimeout(() => {
-      const latest = stateRef.current;
-      let newQueueIds = [...latest.queueIds];
-      
-      // The current challenger (first in queue) just finished their turn
-      const finishedChallengerId = newQueueIds.shift();
-      if (finishedChallengerId) {
-        newQueueIds.push(finishedChallengerId);
-      }
-      
+      const newQueue = [...s.queue];
+      newQueue.shift();
+      newQueue.push(loserIdx);
       broadcast({
         type: 'ROUND_ADVANCED',
-        winnerId: winnerId, 
-        queueIds: newQueueIds,
-        roundNum: latest.roundNum + 1,
+        winnerIdx,
+        queue: newQueue,
+        roundNum: s.roundNum + 1,
       });
     }, 5000);
   }, [broadcast, roomId, onBalanceChange]);
@@ -333,11 +334,11 @@ export function useRealtimeRoom({
   }, []);
 
   // ─── Derived state ───
-  const currentRollerId = state.currentRollerIsWinner ? state.winnerId : state.queueIds[0];
-  const currentRoller = state.players.find(p => p.id === currentRollerId) || null;
+  const currentRollerIdx = state.currentRollerIsWinner ? state.winnerIdx : state.queue[0];
+  const currentRoller = currentRollerIdx !== undefined ? state.players[currentRollerIdx] : null;
   const isMyTurn = currentRoller?.id === userId;
-  const winnerPlayer = state.players.find(p => p.id === state.winnerId) || null;
-  const challengerPlayer = state.players.find(p => p.id === state.queueIds[0]) || null;
+  const winnerPlayer = state.winnerIdx !== undefined ? state.players[state.winnerIdx] : null;
+  const challengerPlayer = state.queue[0] !== undefined ? state.players[state.queue[0]] : null;
 
   return {
     state,
