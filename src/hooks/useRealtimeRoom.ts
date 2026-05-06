@@ -239,7 +239,7 @@ export function useRealtimeRoom({
           });
         }
       } catch (err) {
-        console.error('Error in collect_game_bets:', err);
+        console.error('Error in sync_game_balances:', err);
         dispatch({ type: 'ADD_NOTIFICATION', msg: 'Error collecting bets', notifType: 'info' });
         return;
       }

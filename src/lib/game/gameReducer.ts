@@ -117,8 +117,17 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
       };
     }
     case 'PLAYERS_UPDATED': {
-      // Limit to 6 players in the state
-      const limitedPlayers = action.players.slice(0, MAX_SEATS);
+      // Deduplicate by ID (one account = one seat)
+      const uniquePlayersMap = new Map<string, MPPlayer>();
+      action.players.forEach(p => {
+        if (!uniquePlayersMap.has(p.id)) {
+          uniquePlayersMap.set(p.id, p);
+        }
+      });
+      const uniquePlayers = Array.from(uniquePlayersMap.values());
+      
+      // Limit to 6 players
+      const limitedPlayers = uniquePlayers.slice(0, MAX_SEATS);
       const playerIds = limitedPlayers.map(p => p.id);
 
       if (limitedPlayers.length < MIN_PLAYERS) {
