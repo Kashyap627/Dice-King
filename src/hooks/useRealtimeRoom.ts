@@ -427,6 +427,10 @@ export function useRealtimeRoom({
   // ─── Derived state ───
   const currentRoller = state.players.find(p => p.id === state.currentRollerId) || null;
   const isMyTurn = currentRoller?.id === userId;
+  // Keep a ref to resolveRoll so the effect doesn't re-fire when the callback is recreated
+  const resolveRollRef = useRef(resolveRoll);
+  resolveRollRef.current = resolveRoll;
+
   // ─── Host: Authoritative Turn Resolution ───
   useEffect(() => {
     if (!isHost || state.phase !== 'result' || !state.die1 || !state.die2) {
@@ -436,17 +440,19 @@ export function useRealtimeRoom({
 
     const rollKey = `${state.die1}-${state.die2}-${state.currentRollerId}`;
     if (resolvingRef.current === rollKey) return;
+    
+    // Set guard IMMEDIATELY to prevent any re-fires
+    resolvingRef.current = rollKey;
 
     console.log('[Host] Result detected. Resolving roll:', rollKey);
     const timer = setTimeout(() => {
-      resolvingRef.current = rollKey;
       if (state.die1 && state.die2) {
-        resolveRoll(state.die1, state.die2);
+        resolveRollRef.current(state.die1, state.die2);
       }
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [isHost, state.phase, state.die1, state.die2, state.currentRollerId, resolveRoll]);
+  }, [isHost, state.phase, state.die1, state.die2, state.currentRollerId]);
 
   const winnerPlayer = state.players.find(p => p.id === state.winnerId) || null;
   const challengerPlayer = state.players.find(p => p.id === state.queueIds[0]) || null;
