@@ -202,7 +202,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
           const winnerId = state.diceOutcome === 'win' ? rollerId : opponentId;
           const winner = state.players.find(p => p.id === winnerId);
           if (winner) {
-            setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' }].slice(-3));
+            setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' as const }].slice(-3));
           }
         }
       }, 2500);
