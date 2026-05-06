@@ -288,7 +288,6 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
         lastWinnerId: null,
         lastLoserId: null,
         lastWinAmount: 0,
-        currentRollerId: action.winnerId,
       };
     }
 
