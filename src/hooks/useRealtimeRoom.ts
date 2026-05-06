@@ -43,6 +43,7 @@ export function useRealtimeRoom({
   const resolvingRef = useRef<string | null>(null); // Track which roll we are resolving
   const [isHost, setIsHost] = useState(false);
   const playersRef = useRef<MPPlayer[]>([]);
+  const knownPlayerIds = useRef<Set<string>>(new Set());
   stateRef.current = state;
 
   // Build presence key
@@ -95,18 +96,30 @@ export function useRealtimeRoom({
       setIsHost(amHost);
     });
 
-    channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
-      const p = (newPresences as any[])[0];
-      if (p) {
-        dispatch({ type: 'ADD_NOTIFICATION', msg: `${p.user_name} joined the table`, notifType: 'info' });
-      }
+    channel.on('presence', { event: 'join' }, ({ newPresences }) => {
+      newPresences.forEach((p: any) => {
+        if (!knownPlayerIds.current.has(p.user_id)) {
+          dispatch({ type: 'ADD_NOTIFICATION', msg: `${p.user_name} joined the table`, notifType: 'info' });
+          knownPlayerIds.current.add(p.user_id);
+        }
+      });
     });
 
-    channel.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-      const p = (leftPresences as any[])[0];
-      if (p) {
-        dispatch({ type: 'ADD_NOTIFICATION', msg: `${p.user_name} left the table`, notifType: 'info' });
-      }
+    channel.on('presence', { event: 'leave' }, ({ leftPresences }) => {
+      leftPresences.forEach((p: any) => {
+        // Delay to avoid ghost notifications during track() updates
+        setTimeout(() => {
+          const presenceState = channelRef.current?.presenceState();
+          if (!presenceState) return;
+          const isStillHere = Object.values(presenceState).some(ps => 
+            (ps as any[]).some(pr => pr.user_id === p.user_id)
+          );
+          if (!isStillHere && knownPlayerIds.current.has(p.user_id)) {
+            dispatch({ type: 'ADD_NOTIFICATION', msg: `${p.user_name} left the table`, notifType: 'info' });
+            knownPlayerIds.current.delete(p.user_id);
+          }
+        }, 1500);
+      });
     });
 
     // ── Broadcast: game events ──
