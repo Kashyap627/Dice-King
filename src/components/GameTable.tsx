@@ -46,6 +46,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [personalOverlay, setPersonalOverlay] = useState<{ type: 'win' | 'loss', amount: number } | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
   const feltRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -176,21 +177,28 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
   // ─── Listen for Round Result ───
   useEffect(() => {
     if (state.phase === 'result' && state.diceOutcome) {
-      const isWinner = state.winnerId === user.id;
       const rollerId = state.currentRollerId;
       const opponentId = state.currentRollerIsWinner ? state.queueIds[0] : state.winnerId;
-      const isLoser = (rollerId === user.id && state.diceOutcome === 'loss') ||
-                      (opponentId === user.id && state.diceOutcome === 'win');
+      
+      const isWinner = (state.diceOutcome === 'win' && rollerId === user.id) ||
+                       (state.diceOutcome === 'loss' && opponentId === user.id);
+      
+      const isLoser = (state.diceOutcome === 'loss' && rollerId === user.id) ||
+                      (state.diceOutcome === 'win' && opponentId === user.id);
       
       const timer = setTimeout(() => {
         if (isWinner) {
           setPersonalOverlay({ type: 'win', amount: state.pot });
           playWinChime();
+          // Trigger camera shake on win
+          setIsShaking(true);
+          setTimeout(() => setIsShaking(false), 500);
         } else if (isLoser) {
           setPersonalOverlay({ type: 'loss', amount: state.betAmount });
           playLossTone();
         } else {
-          const winner = state.players.find(p => p.id === state.winnerId);
+          const winnerId = state.diceOutcome === 'win' ? rollerId : opponentId;
+          const winner = state.players.find(p => p.id === winnerId);
           if (winner) {
             setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' }]);
           }
@@ -284,7 +292,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
   const amISpectator = !winnerPlayer?.isMe && !challengerPlayer?.isMe;
 
   return (
-    <div className="screen active" id="screen-game" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className={`screen active ${isShaking ? 'camera-shake' : ''}`} id="screen-game" style={{ display: 'flex', flexDirection: 'column' }}>
       <Toast toasts={toasts} />
       
       <div className="game-topbar">
@@ -382,7 +390,8 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                           className="player-seat" 
                           style={{ left: `${pos.x.toFixed(2)}%`, top: `${pos.y.toFixed(2)}%`, pointerEvents: 'auto' }}
                         >
-                          <div className={`seat-card ${roleClass} ${winnerClass}`}>
+                          <div className={`seat-card ${roleClass} ${winnerClass} ${isRoller && (state.phase === 'playing' || state.phase === 'rolling') ? 'active-turn' : ''}`}>
+                            {p.winStreak >= 3 && <div className="streak-fire">🔥</div>}
                             {qIdx >= 0 && !isChall && <div className="queue-badge">{qIdx + 1}</div>}
                             <div className="seat-av" style={{ backgroundColor: p.avatarColor }}>
                               {p.name.slice(0, 2).toUpperCase()}
