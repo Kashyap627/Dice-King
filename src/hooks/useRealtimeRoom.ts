@@ -18,6 +18,8 @@ interface UseRealtimeRoomOptions {
   userId: string;
   userName: string;
   userBalance: number;
+  userWins: number;
+  userLosses: number;
   tableTier: TableTier;
   onBalanceChange?: (newBalance: number) => void;
 }
@@ -27,6 +29,8 @@ export function useRealtimeRoom({
   userId,
   userName,
   userBalance,
+  userWins,
+  userLosses,
   tableTier,
   onBalanceChange,
 }: UseRealtimeRoomOptions) {
@@ -115,8 +119,8 @@ export function useRealtimeRoom({
           user_id: userId,
           user_name: userName,
           balance: userBalance,
-          wins: user.wins || 0,
-          losses: user.losses || 0,
+          wins: userWins,
+          losses: userLosses,
           online_at: new Date().toISOString(),
         });
       }
@@ -136,8 +140,8 @@ export function useRealtimeRoom({
         user_id: userId,
         user_name: userName,
         balance: userBalance,
-        wins: user.wins || 0,
-        losses: user.losses || 0,
+        wins: userWins,
+        losses: userLosses,
         online_at: new Date().toISOString(),
       });
     }
@@ -186,20 +190,6 @@ export function useRealtimeRoom({
       }
     });
   }, [state.players.length, isHost, broadcast]);
-
-  // ─── Host: Authoritative Turn Resolution ───
-  useEffect(() => {
-    if (!isHost || state.phase !== 'result') return;
-
-    console.log('[Host] Result detected. Resolving roll in 2.5s...');
-    const timer = setTimeout(() => {
-      if (state.die1 && state.die2) {
-        resolveRoll(state.die1, state.die2);
-      }
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [isHost, state.phase, state.die1, state.die2, resolveRoll]);
 
   // ─── Roll Dice ───
   const roll = useCallback(async () => {
@@ -387,6 +377,20 @@ export function useRealtimeRoom({
   // ─── Derived state ───
   const currentRoller = state.players.find(p => p.id === state.currentRollerId) || null;
   const isMyTurn = currentRoller?.id === userId;
+  // ─── Host: Authoritative Turn Resolution ───
+  useEffect(() => {
+    if (!isHost || state.phase !== 'result') return;
+
+    console.log('[Host] Result detected. Resolving roll in 2.5s...');
+    const timer = setTimeout(() => {
+      if (state.die1 && state.die2) {
+        resolveRoll(state.die1, state.die2);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [isHost, state.phase, state.die1, state.die2, resolveRoll]);
+
   const winnerPlayer = state.players.find(p => p.id === state.winnerId) || null;
   const challengerPlayer = state.players.find(p => p.id === state.queueIds[0]) || null;
 
