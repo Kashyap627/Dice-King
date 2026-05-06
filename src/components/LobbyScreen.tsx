@@ -39,30 +39,40 @@ export default function LobbyScreen({ user, onJoinTable, onUpdateBalance }: Lobb
   }, [activeTab]);
 
   async function loadAccountData() {
-    // Load stats
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('wins, losses, games_played, total_earned')
-      .eq('id', user.id)
-      .single();
-    if (profile) {
-      setStats({
-        wins: profile.wins,
-        losses: profile.losses,
-        games: profile.games_played,
-        earned: Number(profile.total_earned)
-      });
+    try {
+      // Load stats
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('wins, losses, games_played, total_earned')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile) {
+        setStats({
+          wins: profile.wins || 0,
+          losses: profile.losses || 0,
+          games: profile.games_played || 0,
+          earned: Number(profile.total_earned || 0)
+        });
+      }
+    } catch (err) {
+      console.error('[Lobby] Error loading account data:', err);
     }
 
-    // Load txns
-    const { data: transactions } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (transactions) {
-      setTxns(transactions);
+    try {
+      // Load txns
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (transactions) {
+        setTxns(transactions);
+      }
+    } catch (err) {
+      console.error('[Lobby] Error loading transactions:', err);
     }
   }
 

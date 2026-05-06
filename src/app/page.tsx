@@ -60,11 +60,15 @@ export default function DiceKingPage() {
               .eq('id', session.user.id)
               .maybeSingle();
 
-            if (error) throw error;
+            if (error) {
+              console.error('[App] Background profile fetch error:', error);
+            }
             
             if (profile) {
               console.log('[App] Background profile load successful. Balance:', profile.balance);
               setUser(prev => prev ? { ...prev, balance: profile.balance } : null);
+            } else {
+              console.log('[App] No profile found for this user yet.');
             }
           } catch (err) {
             console.error('[App] Background profile fetch failed:', err);
