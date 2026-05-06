@@ -36,21 +36,53 @@ export default function DiceKingPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[App] Auth event:', event, 'Session:', !!session);
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('[App] User signed in. Fetching profile...');
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('balance')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        console.log('[App] User signed in. Waiting for session propagation...');
+        
+        // Wait a tiny bit for session to settle
+        await new Promise(r => setTimeout(r, 500));
 
-        const u: StoredUser = {
-          id: session.user.id,
-          name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
-          balance: profile?.balance || STARTING_BALANCE,
-        };
-        console.log('[App] Profile loaded. Transitioning to lobby...');
-        setUser(u);
-        setScreen('lobby');
+        try {
+          console.log('[App] Fetching profile for ID:', session.user.id);
+          
+          // Race the profile fetch against a timeout
+          const profilePromise = supabase
+            .from('profiles')
+            .select('balance')
+            .eq('id', session.user.id)
+            .maybeSingle();
+            
+          const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+          );
+
+          const result = await Promise.race([profilePromise, timeout]) as any;
+          const profile = result?.data;
+          const error = result?.error;
+
+          if (error) {
+            console.error('[App] Profile fetch error:', error);
+          }
+
+          const u: StoredUser = {
+            id: session.user.id,
+            name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
+            balance: profile?.balance ?? STARTING_BALANCE,
+          };
+          
+          console.log('[App] Profile processing complete. Balance:', u.balance);
+          setUser(u);
+          setScreen('lobby');
+        } catch (err) {
+          console.error('[App] Catch block error during profile fetch:', err);
+          // Fallback: Still let them in with default balance if we are sure they are signed in
+          const u: StoredUser = {
+            id: session.user.id,
+            name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
+            balance: STARTING_BALANCE,
+          };
+          setUser(u);
+          setScreen('lobby');
+        }
       } else if (event === 'SIGNED_OUT') {
         console.log('[App] User signed out');
         setUser(null);
