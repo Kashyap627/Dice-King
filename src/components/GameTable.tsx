@@ -198,7 +198,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
         } else if (isLoser) {
           setPersonalOverlay({ type: 'loss', amount: state.betAmount });
           playLossTone();
-        } else if (!isWinner && !isLoser) {
+        } else if (!isWinner && !isLoser && (state.diceOutcome === 'win' || state.diceOutcome === 'loss')) {
           const winnerId = state.diceOutcome === 'win' ? rollerId : opponentId;
           const winner = state.players.find(p => p.id === winnerId);
           if (winner) {
