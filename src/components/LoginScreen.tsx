@@ -7,12 +7,13 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [particles, setParticles] = useState<{ id: number; left: number; dur: number; delay: number }[]>([]);
 
   // Generate particles
@@ -29,9 +30,19 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
     try {
+      if (mode === 'forgot') {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (resetError) throw resetError;
+        setMessage('Password reset link sent! Check your email.');
+        return;
+      }
+
       if (mode === 'signup') {
         if (!name.trim()) throw new Error('Name is required');
         const { data, error: signupError } = await supabase.auth.signUp({
@@ -79,6 +90,18 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   }
 
+  const getTitle = () => {
+    if (mode === 'signup') return 'Create Account';
+    if (mode === 'forgot') return 'Reset Password';
+    return 'Welcome';
+  };
+
+  const getSubTitle = () => {
+    if (mode === 'signup') return 'Join the luxury tables';
+    if (mode === 'forgot') return 'Enter your email to receive a recovery link';
+    return 'Enter your credentials to access the table';
+  };
+
   return (
     <div className="screen active" id="screen-login">
       {/* Particles */}
@@ -106,8 +129,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         </div>
 
         <form className="login-card" onSubmit={handleSubmit}>
-          <h2>{mode === 'signup' ? 'Create Account' : 'Welcome'}</h2>
-          <p>{mode === 'signup' ? 'Join the luxury tables' : 'Enter your credentials to access the table'}</p>
+          <h2>{getTitle()}</h2>
+          <p>{getSubTitle()}</p>
 
           {mode === 'signup' && (
             <div className="field">
@@ -134,17 +157,31 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             />
           </div>
 
-          <div className="field">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              suppressHydrationWarning
-            />
-          </div>
+          {mode !== 'forgot' && (
+            <div className="field">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Password</label>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    className="link-btn"
+                    style={{ fontSize: '10px', textDecoration: 'none', color: '#b8a880', marginBottom: '7px' }}
+                    onClick={() => { setMode('forgot'); setError(''); setMessage(''); }}
+                  >
+                    Forgot?
+                  </button>
+                )}
+              </div>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                suppressHydrationWarning
+              />
+            </div>
+          )}
 
           {error && (
             <div style={{ color: '#ff8a80', fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
@@ -152,17 +189,33 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             </div>
           )}
 
+          {message && (
+            <div style={{ color: '#6fcf97', fontSize: 13, textAlign: 'center', marginBottom: 14 }}>
+              {message}
+            </div>
+          )}
+
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Processing...' : (mode === 'signup' ? 'Create Account' : 'Enter the Table')}
+            {loading ? 'Processing...' : (mode === 'signup' ? 'Create Account' : mode === 'forgot' ? 'Send Reset Link' : 'Enter the Table')}
           </button>
 
-          <div style={{ marginTop: 14, textAlign: 'center' }}>
+          <div style={{ marginTop: 14, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
               type="button"
               className="link-btn"
-              onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setMessage(''); }}
             >
-              {mode === 'signin' ? "New player? Create an account" : "← Back to Login"}
+              {mode === 'signin' ? "New player? Create an account" : (mode === 'forgot' ? "← Back to Login" : "← Back to Login")}
+            </button>
+            
+            {/* Rescue button for stuck users */}
+            <button 
+              type="button" 
+              className="link-btn" 
+              style={{ fontSize: '11px', opacity: 0.6 }}
+              onClick={() => window.location.reload()}
+            >
+              Page not loading? Refresh
             </button>
           </div>
         </form>

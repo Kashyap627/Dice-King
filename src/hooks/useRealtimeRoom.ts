@@ -306,7 +306,7 @@ export function useRealtimeRoom({
 
     // Resolve game win atomically
     try {
-      const { data, error } = await supabase.rpc('resolve_game_win', {
+      const { data, error } = await supabase.rpc('sync_game_win', {
         p_winner_id: winner.id,
         p_loser_id: loser.id,
         p_win_amount: winAmount,
@@ -315,13 +315,13 @@ export function useRealtimeRoom({
       });
 
       if (error) {
-        console.error('Win resolution failed:', error);
+        console.error('Win resolution RPC returned error:', error);
       } else if (data !== null) {
         broadcast({ type: 'UPDATE_BALANCE', playerId: winner.id, newBalance: Number(data) });
         if (winner.isMe) onBalanceChange?.(Number(data));
       }
     } catch (err) {
-      console.error('Error in resolve_game_win:', err);
+      console.error('Error in sync_game_win:', err);
     }
 
     broadcast({ type: 'ROUND_ENDED', winnerId: winner.id, loserId: loser.id, winAmount });

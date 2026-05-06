@@ -163,14 +163,19 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
         newQueueIds = playerIds.filter(id => id !== nextWinnerId);
       }
 
+      let nextRollerId = state.currentRollerId;
+      if (state.phase !== 'waiting') {
+        if (!nextRollerId || !playerIds.includes(nextRollerId)) {
+          nextRollerId = state.currentRollerIsWinner ? nextWinnerId : (newQueueIds[0] || nextWinnerId);
+        }
+      }
+
       return { 
         ...state, 
         players: limitedPlayers,
         queueIds: newQueueIds,
         winnerId: nextWinnerId,
-        currentRollerId: (state.phase === 'playing' || state.phase === 'rolling' || state.phase === 'result')
-          ? (state.currentRollerIsWinner ? nextWinnerId : newQueueIds[0] || nextWinnerId)
-          : state.currentRollerId
+        currentRollerId: nextRollerId
       };
     }
 
