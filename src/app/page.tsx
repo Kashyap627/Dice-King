@@ -34,7 +34,9 @@ export default function DiceKingPage() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[App] Auth event:', event, 'Session:', !!session);
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[App] User signed in. Fetching profile...');
         const { data: profile } = await supabase
           .from('profiles')
           .select('balance')
@@ -46,9 +48,11 @@ export default function DiceKingPage() {
           name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
           balance: profile?.balance || STARTING_BALANCE,
         };
+        console.log('[App] Profile loaded. Transitioning to lobby...');
         setUser(u);
         setScreen('lobby');
       } else if (event === 'SIGNED_OUT') {
+        console.log('[App] User signed out');
         setUser(null);
         setScreen('login');
       }

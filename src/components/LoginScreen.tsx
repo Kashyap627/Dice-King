@@ -29,50 +29,82 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    console.log('[Auth] Submit started. Mode:', mode, 'Email:', email);
     setError('');
     setMessage('');
     setLoading(true);
 
     // Safety timeout: if login takes > 10s, reset loading
-    const timer = setTimeout(() => setLoading(false), 10000);
+    const timer = setTimeout(() => {
+      console.warn('[Auth] Timeout reached. Resetting loading state.');
+      setLoading(false);
+    }, 10000);
 
     try {
       if (mode === 'forgot') {
+        console.log('[Auth] Attempting password reset...');
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: window.location.origin,
         });
         if (resetError) throw resetError;
+        console.log('[Auth] Reset link sent successfully');
         setMessage('Password reset link sent! Check your email.');
+        setLoading(false);
         return;
       }
 
       if (mode === 'signup') {
         if (!name.trim()) throw new Error('Name is required');
-        const { error: signupError } = await supabase.auth.signUp({
+        console.log('[Auth] Attempting sign up for:', email);
+        const { data, error: signupError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: name.trim() }
+            data: { display_name: name.trim() },
+            emailRedirectTo: window.location.origin
           }
         });
-        if (signupError) throw signupError;
-        // page.tsx will handle the SIGNED_IN event
+        
+        if (signupError) {
+          console.error('[Auth] Sign up error:', signupError);
+          throw signupError;
+        }
+        
+        console.log('[Auth] Sign up response:', data);
+        
+        if (data.session) {
+          console.log('[Auth] Sign up successful, session created');
+          // onAuthStateChange in page.tsx will take over
+        } else {
+          console.log('[Auth] Sign up successful, verification required');
+          setMessage('Account created! Please check your email to verify your account before logging in.');
+          setLoading(false);
+        }
       } else {
-        const { error: signinError } = await supabase.auth.signInWithPassword({
+        console.log('[Auth] Attempting sign in for:', email);
+        const { data, error: signinError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (signinError) throw signinError;
-        // page.tsx will handle the SIGNED_IN event
+        
+        if (signinError) {
+          console.error('[Auth] Sign in error:', signinError);
+          throw signinError;
+        }
+        
+        console.log('[Auth] Sign in response:', data);
+        if (data.user) {
+          console.log('[Auth] Sign in successful. User ID:', data.user.id);
+          // page.tsx will handle the SIGNED_IN event
+        }
       }
     } catch (err: any) {
+      console.error('[Auth] Catch block error:', err);
       setError(err.message || 'An error occurred');
       setLoading(false);
     } finally {
       clearTimeout(timer);
-      // We don't set loading to false here because if successful, 
-      // the page will redirect and this component will unmount.
-      // If there's an error, the catch block handles it.
+      console.log('[Auth] Submit finished');
     }
   }
 
