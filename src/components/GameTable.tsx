@@ -45,6 +45,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
   const [sideBetAmount, setSideBetAmount] = useState<number>(betAmount);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [personalOverlay, setPersonalOverlay] = useState<{ type: 'win' | 'loss', amount: number } | null>(null);
   const feltRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -172,6 +173,39 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
     }
   }, [state.phase, currentRoller, playerAngles]);
 
+  // ─── Listen for Round Result ───
+  useEffect(() => {
+    if (state.phase === 'result' && state.diceOutcome) {
+      const isWinner = state.winnerId === user.id;
+      const rollerId = state.currentRollerId;
+      const opponentId = state.currentRollerIsWinner ? state.queueIds[0] : state.winnerId;
+      const isLoser = (rollerId === user.id && state.diceOutcome === 'loss') ||
+                      (opponentId === user.id && state.diceOutcome === 'win');
+      
+      const timer = setTimeout(() => {
+        if (isWinner) {
+          setPersonalOverlay({ type: 'win', amount: state.pot });
+          playWinChime();
+        } else if (isLoser) {
+          setPersonalOverlay({ type: 'loss', amount: state.betAmount });
+          playLossTone();
+        } else {
+          const winner = state.players.find(p => p.id === state.winnerId);
+          if (winner) {
+            setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' }]);
+          }
+        }
+      }, 2500);
+
+      const hideTimer = setTimeout(() => setPersonalOverlay(null), 7500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [state.phase, state.diceOutcome, state.winnerId, state.pot, state.betAmount, user.id, state.currentRollerId, state.currentRollerIsWinner, state.queueIds, state.players]);
+
   const handleLeave = () => {
     leaveRoom();
     onLeave(user.balance);
@@ -185,7 +219,6 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
 
   // Render waiting room
   if (state.phase === 'waiting') {
-    const progress = (state.players.length / MIN_PLAYERS) * 100;
     return (
       <div className="screen active" id="screen-game" style={{ display: 'flex', flexDirection: 'column' }}>
         <Toast toasts={toasts} />
@@ -197,76 +230,48 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
             </span>
           </div>
         </div>
-        <div className="game-layout" style={{ flex: 1 }}>
-          <div className="game-main">
-            <div className="waiting-screen">
-              <div className="waiting-3d-dice">
-                <div className="waiting-cube">
-                  {/* Exact HTML Prototype Wait Cube */}
-                  <div className="waiting-face wf-long wf1">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}></div>
-                      <span style={{ position: 'absolute', bottom: 12, right: 12, fontFamily: 'Cinzel, serif', fontSize: 9, fontWeight: 700, color: 'rgba(100,65,15,0.35)' }}>♛</span>
-                    </div>
-                  </div>
-                  <div className="waiting-face wf-long wf2">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: 18, left: 12 }}></div><div className="wdot" style={{ top: 18, right: 12 }}></div>
-                      <div className="wdot" style={{ top: '50%', left: 12, transform: 'translateY(-50%)' }}></div><div className="wdot" style={{ top: '50%', right: 12, transform: 'translateY(-50%)' }}></div>
-                      <div className="wdot" style={{ bottom: 18, left: 12 }}></div><div className="wdot" style={{ bottom: 18, right: 12 }}></div>
-                    </div>
-                  </div>
-                  <div className="waiting-face wf-long wf3">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: 18, left: '50%', transform: 'translateX(-50%)' }}></div>
-                      <div className="wdot" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}></div>
-                      <div className="wdot" style={{ bottom: 18, left: '50%', transform: 'translateX(-50%)' }}></div>
-                    </div>
-                  </div>
-                  <div className="waiting-face wf-long wf4">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: 18, left: 12 }}></div><div className="wdot" style={{ top: 18, right: 12 }}></div>
-                      <div className="wdot" style={{ bottom: 18, left: 12 }}></div><div className="wdot" style={{ bottom: 18, right: 12 }}></div>
-                    </div>
-                  </div>
-                  <div className="waiting-face wf-short wf5">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}></div>
-                    </div>
-                  </div>
-                  <div className="waiting-face wf-short wf6">
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <div className="wdot" style={{ top: 14, left: 14 }}></div><div className="wdot" style={{ top: 14, right: 14 }}></div>
-                      <div className="wdot" style={{ bottom: 14, left: 14 }}></div><div className="wdot" style={{ bottom: 14, right: 14 }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="waiting-title">Awaiting Players</div>
-              <div className="waiting-text">The table requires at least {MIN_PLAYERS} players to begin.</div>
-              <div className="waiting-players">
-                {Array.from({ length: MIN_PLAYERS }).map((_, i) => {
-                  const p = state.players[i];
-                  if (p) {
-                    return (
-                      <div key={i} className="waiting-slot">
-                        <div className="waiting-av slot-filled" style={{ backgroundColor: p.avatarColor }}>
-                          {p.name.slice(0,2).toUpperCase()}
+        
+        <div className="waiting-container">
+          <div className="waiting-card">
+            <div className="searching-spinner">
+              <div className="spinner-ring"></div>
+              <div className="spinner-icon">🎲</div>
+            </div>
+            <h2 className="waiting-title">Awaiting Challengers</h2>
+            <p className="waiting-subtitle">Minimum {MIN_PLAYERS} players required to start the round</p>
+            
+            <div className="waiting-slots">
+              {Array.from({ length: 4 }).map((_, i) => {
+                const p = state.players[i];
+                return (
+                  <div key={i} className={`waiting-slot ${p ? 'filled' : 'empty'}`}>
+                    {p ? (
+                      <div className="slot-content">
+                        <div className="slot-av" style={{ backgroundColor: p.avatarColor }}>
+                          {p.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <div className="waiting-name">{p.name}</div>
+                        <div className="slot-info">
+                          <div className="slot-name">{p.name}</div>
+                          <div className="slot-status">READY</div>
+                        </div>
                       </div>
-                    );
-                  }
-                  return (
-                    <div key={i} className="waiting-slot">
-                      <div className="waiting-av slot-empty"></div>
-                    </div>
-                  );
-                })}
+                    ) : (
+                      <div className="slot-empty-content">
+                        <div className="slot-av-placeholder">?</div>
+                        <div className="slot-status">WAITING...</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="waiting-progress">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${(state.players.length / MIN_PLAYERS) * 100}%` }}></div>
               </div>
-              <div className="prog-track"><div className="prog-fill" style={{ width: `${progress}%` }}></div></div>
-              <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: 'var(--text3)' }}>
-                {state.players.length} / {MIN_PLAYERS} players
+              <div className="progress-text">
+                {state.players.length} / {MIN_PLAYERS} Players Joined
               </div>
             </div>
           </div>
@@ -422,6 +427,18 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
 
         {/* SIDEBAR */}
         <div className="game-sidebar">
+          {personalOverlay && (
+            <div className={`personal-overlay ${personalOverlay.type === 'win' ? 'overlay-win' : 'overlay-loss'}`}>
+              <div className="overlay-content">
+                <div className="overlay-title">{personalOverlay.type === 'win' ? 'VICTORY' : 'DEFEAT'}</div>
+                <div className="overlay-amount">
+                  {personalOverlay.type === 'win' ? `+₹${personalOverlay.amount}` : `-₹${personalOverlay.amount}`}
+                </div>
+                <div className="overlay-sub">{personalOverlay.type === 'win' ? 'The table is yours!' : 'Better luck next roll.'}</div>
+              </div>
+            </div>
+          )}
+
           <div className="sidebar-section">
             <div className="sidebar-title">Table Info</div>
             <div className="info-display">

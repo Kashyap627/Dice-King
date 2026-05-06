@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Lato:wght@300;400;700&display=swap');
 @import "tailwindcss";
 
 
@@ -31,11 +31,11 @@ input{font-family:'Lato',sans-serif;}
 ::-webkit-scrollbar-track{background:var(--felt3);}
 ::-webkit-scrollbar-thumb{background:var(--gold3);border-radius:2px;}
 
-/* ── SCREENS ── */
+/* â”€â”€ SCREENS â”€â”€ */
 .screen{display:none;min-height:100vh;}
 .screen.active{display:flex;}
 
-/* ══════════ LOGIN ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• LOGIN â•â•â•â•â•â•â•â•â•â• */
 #screen-login{flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;
   background:radial-gradient(ellipse at 50% 0%,#1a4a28 0%,var(--felt3) 60%);}
 .login-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
@@ -88,7 +88,7 @@ input{font-family:'Lato',sans-serif;}
   border-radius:8px;padding:10px 14px;font-size:13px;color:var(--gold2);text-align:center;margin-bottom:16px;}
 .link-btn{background:none;border:none;color:var(--gold3);font-size:13px;text-decoration:underline;font-family:'Lato',sans-serif;}
 
-/* ══════════ APP SHELL ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• APP SHELL â•â•â•â•â•â•â•â•â•â• */
 #screen-app{flex-direction:column;}
 .topbar{
   background:linear-gradient(90deg,var(--mahogany),var(--mah2),var(--mahogany));
@@ -118,7 +118,7 @@ input{font-family:'Lato',sans-serif;}
 .notif-dot{position:absolute;top:2px;right:2px;width:9px;height:9px;
   background:var(--chip-red);border-radius:50%;border:2px solid var(--mahogany);}
 
-/* ── NAV ── */
+/* â”€â”€ NAV â”€â”€ */
 .nav-tabs{
   background:linear-gradient(90deg,var(--mah3),var(--mahogany),var(--mah3));
   border-bottom:1px solid rgba(212,168,67,0.2);
@@ -129,14 +129,14 @@ input{font-family:'Lato',sans-serif;}
 .nav-tab.active{color:var(--gold2);border-bottom-color:var(--gold);}
 .nav-tab:hover:not(.active){color:var(--text2);}
 
-/* ── PAGES ── */
+/* â”€â”€ PAGES â”€â”€ */
 .page{display:none;padding:28px 24px;max-width:1140px;margin:0 auto;width:100%;}
 .page.active{display:block;}
 .page-title{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--gold2);letter-spacing:2px;margin-bottom:4px;}
 .page-sub{font-size:13px;color:var(--text2);margin-bottom:28px;letter-spacing:0.5px;}
 .page-divider{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold3),transparent);margin-bottom:28px;}
 
-/* ══════════ LOBBY ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• LOBBY â•â•â•â•â•â•â•â•â•â• */
 .tables-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;}
 .table-card{
   background:linear-gradient(160deg,rgba(15,40,20,0.95),rgba(8,22,10,0.98));
@@ -174,7 +174,7 @@ input{font-family:'Lato',sans-serif;}
 .btn-join:hover{box-shadow:0 5px 24px rgba(212,168,67,0.5);transform:translateY(-1px);}
 .btn-join:disabled{background:rgba(255,255,255,0.06);color:var(--text3);cursor:not-allowed;box-shadow:none;transform:none;}
 
-/* ══════════ GAME SCREEN ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• GAME SCREEN â•â•â•â•â•â•â•â•â•â• */
 #screen-game{flex-direction:column;}
 .game-topbar{
   background:linear-gradient(90deg,var(--mahogany),var(--mah2),var(--mahogany));
@@ -192,7 +192,7 @@ input{font-family:'Lato',sans-serif;}
   text-shadow:0 0 20px rgba(212,168,67,0.5);}
 .game-layout{display:grid;grid-template-columns:1fr 310px;flex:1;overflow:hidden;min-height:0;}
 
-/* ── MAIN GAME ── */
+/* â”€â”€ MAIN GAME â”€â”€ */
 .game-main{
   overflow-y:auto;
   display:flex;flex-direction:column;align-items:center;
@@ -203,7 +203,7 @@ input{font-family:'Lato',sans-serif;}
     repeating-linear-gradient(-45deg,rgba(0,0,0,0.03) 0,rgba(0,0,0,0.03) 1px,transparent 0,transparent 50%);
   background-size:auto,8px 8px,8px 8px;}
 
-/* ── WAITING ── */
+/* â”€â”€ WAITING â”€â”€ */
 .waiting-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:24px;padding:40px;text-align:center;}
 .waiting-3d-dice{width:110px;height:240px;perspective:500px;margin:0 auto;}
 .waiting-cube{width:72px;height:180px;position:relative;transform-style:preserve-3d;
@@ -243,7 +243,7 @@ input{font-family:'Lato',sans-serif;}
 .prog-track{width:220px;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:2px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
 
-/* ── ACTIVE GAME ── */
+/* â”€â”€ ACTIVE GAME â”€â”€ */
 #game-active-area{width:100%;max-width:640px;}
 
 /* PLAYER CARDS */
@@ -284,21 +284,21 @@ input{font-family:'Lato',sans-serif;}
   font-family:'Cinzel',serif;font-size:20px;font-weight:700;letter-spacing:3px;
   box-shadow:0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(212,168,67,0.1);
   position:relative;}
-.vs-banner::before,.vs-banner::after{content:'◆';position:absolute;top:50%;transform:translateY(-50%);
+.vs-banner::before,.vs-banner::after{content:'â—†';position:absolute;top:50%;transform:translateY(-50%);
   color:var(--gold3);font-size:10px;}
 .vs-banner::before{left:14px;}
 .vs-banner::after{right:14px;}
 .vs-name{color:var(--gold2);}
 .vs-sep{color:rgba(212,168,67,0.4);margin:0 14px;font-size:14px;}
 
-/* ══════════ IVORY CUBE DICE — matches aged ivory photo ══════════ */
-/* Cream ivory body · deep drilled ring pips · heavy rounded corners · crown mark */
+/* â•â•â•â•â•â•â•â•â•â• IVORY CUBE DICE â€” matches aged ivory photo â•â•â•â•â•â•â•â•â•â• */
+/* Cream ivory body Â· deep drilled ring pips Â· heavy rounded corners Â· crown mark */
 
 .dice-area{display:flex;gap:56px;justify-content:center;margin-bottom:8px;align-items:flex-end;}
 .die-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
 .die-label-text{font-family:'Cinzel',serif;font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;}
 
-/* Square cube scene: 110×110 */
+/* Square cube scene: 110Ã—110 */
 .dice-scene{width:130px;height:130px;perspective:520px;cursor:default;position:relative;}
 .dice-cube{
   width:100px;height:100px;
@@ -327,7 +327,7 @@ input{font-family:'Lato',sans-serif;}
 }
 .dice-cube.rolling{animation:ivory-roll 0.3s linear infinite;}
 
-/* Landing poses — face 1 = front face */
+/* Landing poses â€” face 1 = front face */
 .dice-cube.show-1{transform:rotateX(-22deg) rotateY(32deg);}
 .dice-cube.show-3{transform:rotateX(68deg)  rotateY(32deg);}
 .dice-cube.show-4{transform:rotateX(-112deg)rotateY(32deg);}
@@ -337,7 +337,7 @@ input{font-family:'Lato',sans-serif;}
 .dice-cube.show-win  .iface{box-shadow:inset 0 0 0 3px rgba(39,174,96,0.9),inset 0 0 20px rgba(39,174,96,0.2),2px 4px 18px rgba(0,0,0,0.55);}
 .dice-cube.show-lose .iface{box-shadow:inset 0 0 0 3px rgba(231,76,60,0.8),inset 0 0 18px rgba(231,76,60,0.15),2px 4px 18px rgba(0,0,0,0.55);}
 
-/* ── IVORY FACE MATERIAL ── */
+/* â”€â”€ IVORY FACE MATERIAL â”€â”€ */
 .iface{
   position:absolute;width:100px;height:100px;
   border-radius:20px;          /* heavy rounding like real ivory dice */
@@ -367,7 +367,7 @@ input{font-family:'Lato',sans-serif;}
 .iface.f-bottom{filter:brightness(0.58);}
 .iface.f-back  {filter:brightness(0.62);}
 
-/* Face transforms — 100px cube, half=50px */
+/* Face transforms â€” 100px cube, half=50px */
 .iface.f-front {transform:translateZ(50px);}
 .iface.f-back  {transform:rotateY(180deg)  translateZ(50px);}
 .iface.f-right {transform:rotateY(90deg)   translateZ(50px);}
@@ -375,7 +375,7 @@ input{font-family:'Lato',sans-serif;}
 .iface.f-top   {transform:rotateX(90deg)   translateZ(50px);}
 .iface.f-bottom{transform:rotateX(-90deg)  translateZ(50px);}
 
-/* ── IVORY RING PIPS ── */
+/* â”€â”€ IVORY RING PIPS â”€â”€ */
 /* Each pip = drilled hole look: dark center + lighter ring (concentric circles) */
 .fdots{position:relative;width:100%;height:100%;padding:12px;}
 .rpip{
@@ -383,7 +383,7 @@ input{font-family:'Lato',sans-serif;}
   width:16px;height:16px;border-radius:50%;
   /* Outer ring: medium dark brown */
   background:radial-gradient(circle at 50% 50%,
-    #2a1506 0%,       /* dark center — deepest part of drill */
+    #2a1506 0%,       /* dark center â€” deepest part of drill */
     #2a1506 28%,
     #5a3012 36%,      /* mid-brown transition */
     #8b5520 46%,      /* ring body */
@@ -423,7 +423,7 @@ input{font-family:'Lato',sans-serif;}
 .die-result-val.win-color{color:#6fcf97;}
 .die-result-val.lose-color{color:#ff8a80;}
 
-/* ── RESULT MSG ── */
+/* â”€â”€ RESULT MSG â”€â”€ */
 .result-msg{
   font-family:'Cinzel',serif;font-size:22px;font-weight:700;letter-spacing:2px;
   text-align:center;margin-bottom:22px;min-height:36px;
@@ -432,7 +432,7 @@ input{font-family:'Lato',sans-serif;}
 .result-lose-msg{color:#ff8a80;text-shadow:0 0 20px rgba(231,76,60,0.4);}
 .result-neutral-msg{color:var(--text2);}
 
-/* ── ROLL BUTTON ── */
+/* â”€â”€ ROLL BUTTON â”€â”€ */
 .btn-roll-wrap{text-align:center;position:relative;}
 .btn-roll{
   background:linear-gradient(135deg,#8a5c10,var(--gold2),#c89030,var(--gold2),#8a5c10);
@@ -453,7 +453,7 @@ input{font-family:'Lato',sans-serif;}
 .roller-hint{font-family:'Cinzel',serif;font-size:11px;color:var(--text3);
   text-align:center;margin-top:12px;letter-spacing:1px;}
 
-/* ══════════ SIDEBAR ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â• */
 .game-sidebar{
   background:linear-gradient(180deg,var(--mahogany),var(--mah3));
   border-left:1px solid rgba(212,168,67,0.15);
@@ -500,7 +500,7 @@ input{font-family:'Lato',sans-serif;}
 .notif-info{border-left-color:rgba(212,168,67,0.4);color:var(--text2);}
 .notif-time{color:var(--text3);font-size:9px;margin-top:2px;font-family:'Cinzel',serif;}
 
-/* ══════════ ACCOUNT PAGE ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• ACCOUNT PAGE â•â•â•â•â•â•â•â•â•â• */
 .account-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .acc-card{
   background:linear-gradient(160deg,rgba(15,40,20,0.95),rgba(8,22,10,0.98));
@@ -574,7 +574,7 @@ input{font-family:'Lato',sans-serif;}
   border-radius:10px;padding:13px;width:100%;transition:all 0.2s;}
 .btn-red-outline:hover{background:rgba(231,76,60,0.1);}
 
-/* ══════════ OVERLAY ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• OVERLAY â•â•â•â•â•â•â•â•â•â• */
 .overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;
   background:rgba(0,0,0,0.82);backdrop-filter:blur(8px);}
 .overlay.active{display:flex;}
@@ -599,7 +599,7 @@ input{font-family:'Lato',sans-serif;}
 .cpiece{position:absolute;top:-10px;opacity:0;animation:cfall linear forwards;}
 @keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0) scale(1);}80%{opacity:0.8;}100%{opacity:0;transform:translateY(110vh) rotate(900deg) scale(0.5);}}
 
-/* ── TOAST ── */
+/* â”€â”€ TOAST â”€â”€ */
 .toast-container{position:fixed;top:76px;right:18px;z-index:500;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{
   background:linear-gradient(135deg,rgba(18,44,20,0.97),rgba(10,26,12,0.98));
@@ -613,7 +613,7 @@ input{font-family:'Lato',sans-serif;}
 .toast-bet{border-left:3px solid #bb8fce;color:#d7bde2;}
 .toast-info{border-left:3px solid var(--gold3);color:var(--text);}
 
-/* ══════════ CIRCULAR CASINO TABLE ══════════ */
+/* â•â•â•â•â•â•â•â•â•â• CIRCULAR CASINO TABLE â•â•â•â•â•â•â•â•â•â• */
 .casino-table-outer{
   width:min(660px,94vw);height:min(660px,94vw);
   position:relative;margin:0 auto 20px;}
@@ -659,7 +659,7 @@ input{font-family:'Lato',sans-serif;}
   letter-spacing:2px;white-space:nowrap;
   backdrop-filter:blur(4px);}
 
-/* Player seats — positioned by JS around circle */
+/* Player seats â€” positioned by JS around circle */
 .game-players-row{position:absolute;inset:0;border-radius:50%;pointer-events:none;}
 .player-seat{
   position:absolute;
@@ -709,4 +709,284 @@ input{font-family:'Lato',sans-serif;}
   .f-right{transform:rotateY(90deg) translateZ(45px);}.f-left{transform:rotateY(-90deg) translateZ(45px);}
   .f-top{transform:rotateX(90deg) translateZ(45px);}.f-bottom{transform:rotateX(-90deg) translateZ(45px);}
 }
+
+
+/* ─── LUXURY WAITING ROOM ─── */
+.waiting-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(circle at center, #0a1f14 0%, #050d09 100%);
+}
+
+.waiting-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(15, 25, 20, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 24px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(212, 175, 55, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.searching-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+}
+
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(212, 175, 55, 0.1);
+  border-top-color: var(--gold2);
+  border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.waiting-title {
+  font-family: 'Cinzel', serif;
+  font-size: 24px;
+  color: var(--cream);
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.waiting-subtitle {
+  color: var(--text3);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.waiting-slots {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.waiting-slot {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 16px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.waiting-slot.filled {
+  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.slot-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.slot-av {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.slot-name {
+  font-size: 14px;
+  color: var(--cream);
+  font-weight: 600;
+}
+
+.slot-status {
+  font-size: 10px;
+  color: var(--gold2);
+  letter-spacing: 1px;
+}
+
+.slot-empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.4;
+}
+
+.slot-av-placeholder {
+  width: 40px;
+  height: 40px;
+  border: 1px dashed rgba(255,255,255,0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+}
+
+.waiting-progress {
+  margin-top: 20px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold1), var(--gold2));
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
+
+/* ─── MOBILE RESPONSIVENESS ─── */
+@media (max-width: 768px) {
+  .casino-table-felt {
+    width: 92vw;
+    height: 92vw;
+  }
+  
+  .game-layout {
+    flex-direction: column;
+  }
+  
+  .game-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(212,175,55,0.1);
+    padding: 15px;
+  }
+  
+  .game-topbar {
+    padding: 10px 15px;
+  }
+  
+  .game-pot-val {
+    font-size: 18px;
+  }
+  
+  .dice-area {
+    gap: 15px;
+  }
+  
+  .die-wrap {
+    transform: scale(0.85);
+  }
+  
+  .waiting-card {
+    padding: 30px 20px;
+  }
+  
+  .waiting-slots {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .casino-table-felt {
+    width: 96vw;
+    height: 96vw;
+  }
+  
+  .game-pot-display {
+    display: none;
+  }
+  
+  .btn-roll {
+    width: 100%;
+    height: 54px;
+    font-size: 16px;
+  }
+  
+  .seat {
+    transform: scale(0.8);
+  }
+}
+
+
+/* ─── PERSONAL RESULT OVERLAY ─── */
+.personal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.overlay-content {
+  text-align: center;
+  animation: slideUp 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+.overlay-title {
+  font-family: 'Cinzel', serif;
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 12px;
+  margin-bottom: 10px;
+}
+
+.overlay-win .overlay-title {
+  color: var(--gold2);
+  text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+}
+
+.overlay-loss .overlay-title {
+  color: #ff4d4d;
+  text-shadow: 0 0 30px rgba(255, 77, 77, 0.3);
+}
+
+.overlay-amount {
+  font-family: 'Cinzel', serif;
+  font-size: 42px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.overlay-sub {
+  color: var(--text3);
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 

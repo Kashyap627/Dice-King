@@ -145,7 +145,32 @@ export function useRealtimeRoom({
         online_at: new Date().toISOString(),
       });
     }
-  }, [userBalance]);
+  }, [userBalance, userWins, userLosses, userId, userName]);
+
+  // Handle visibility change (reconnect if tab was backgrounded)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Realtime] Tab visible. Checking connection...');
+        if (!channelRef.current || channelRef.current.state !== 'joined') {
+          console.log('[Realtime] Channel not joined. Reconnecting...');
+          // The main useEffect handles the initial setup, 
+          // but we might want to trigger a re-track if the status is weird.
+          channelRef.current?.track({
+            user_id: userId,
+            user_name: userName,
+            balance: userBalance,
+            wins: userWins,
+            losses: userLosses,
+            online_at: new Date().toISOString(),
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [userId, userName, userBalance, userWins, userLosses]);
 
   // ─── Broadcast helper ───
   const broadcast = useCallback((action: GameAction) => {
