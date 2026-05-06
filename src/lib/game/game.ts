@@ -120,6 +120,7 @@ export interface StoredUser {
   balance: number;
   wins?: number;
   losses?: number;
+  winStreak?: number;
 }
 
 export function loadUser(): StoredUser | null {

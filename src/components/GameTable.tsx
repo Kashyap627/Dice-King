@@ -37,6 +37,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
     userBalance: user.balance,
     userWins: user.wins || 0,
     userLosses: user.losses || 0,
+    userWinStreak: user.winStreak || 0,
     tableTier,
     onBalanceChange: onUpdateBalance,
   });

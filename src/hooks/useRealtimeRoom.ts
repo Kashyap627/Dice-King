@@ -20,6 +20,7 @@ interface UseRealtimeRoomOptions {
   userBalance: number;
   userWins: number;
   userLosses: number;
+  userWinStreak: number;
   tableTier: TableTier;
   onBalanceChange?: (newBalance: number) => void;
 }
@@ -31,6 +32,7 @@ export function useRealtimeRoom({
   userBalance,
   userWins,
   userLosses,
+  userWinStreak,
   tableTier,
   onBalanceChange,
 }: UseRealtimeRoomOptions) {
@@ -70,6 +72,7 @@ export function useRealtimeRoom({
             seatIndex: seatIdx,
             wins: p.wins || 0,
             losses: p.losses || 0,
+            winStreak: p.win_streak || 0,
           });
           seatIdx++;
         }
@@ -121,6 +124,7 @@ export function useRealtimeRoom({
           balance: userBalance,
           wins: userWins,
           losses: userLosses,
+          win_streak: userWinStreak,
           online_at: new Date().toISOString(),
         });
       }
@@ -142,6 +146,7 @@ export function useRealtimeRoom({
         balance: userBalance,
         wins: userWins,
         losses: userLosses,
+        win_streak: userWinStreak,
         online_at: new Date().toISOString(),
       });
     }
@@ -162,6 +167,7 @@ export function useRealtimeRoom({
             balance: userBalance,
             wins: userWins,
             losses: userLosses,
+            win_streak: userWinStreak,
             online_at: new Date().toISOString(),
           });
         }
