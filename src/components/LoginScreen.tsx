@@ -74,7 +74,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         
         if (data.session) {
           console.log('[Auth] Sign up successful, session created');
-          // onAuthStateChange in page.tsx will take over
+          setLoading(false);
+          // page.tsx will handle the SIGNED_IN event
         } else {
           console.log('[Auth] Sign up successful, verification required');
           setMessage('Account created! Please check your email to verify your account before logging in.');
@@ -93,6 +94,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         }
         
         console.log('[Auth] Sign in response:', data);
+        setLoading(false);
         if (data.user) {
           console.log('[Auth] Sign in successful. User ID:', data.user.id);
           // page.tsx will handle the SIGNED_IN event

@@ -35,54 +35,42 @@ export default function DiceKingPage() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[App] Auth event:', event, 'Session:', !!session);
+      
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('[App] User signed in. Waiting for session propagation...');
+        console.log('[App] User identity confirmed. Transitioning to lobby immediately...');
         
-        // Wait a tiny bit for session to settle
-        await new Promise(r => setTimeout(r, 500));
+        // ── STEP 1: Immediate Transition ──
+        // We create a temporary user object so the UI can render right away
+        const tempUser: StoredUser = {
+          id: session.user.id,
+          name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
+          balance: STARTING_BALANCE, // Temporary balance
+        };
+        setUser(tempUser);
+        setScreen('lobby');
 
-        try {
-          console.log('[App] Fetching profile for ID:', session.user.id);
-          
-          // Race the profile fetch against a timeout
-          const profilePromise = supabase
-            .from('profiles')
-            .select('balance')
-            .eq('id', session.user.id)
-            .maybeSingle();
+        // ── STEP 2: Background Profile Load ──
+        // We do this in a separate execution block so it doesn't block the UI
+        (async () => {
+          try {
+            console.log('[App] Background profile fetch started...');
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('balance')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            if (error) throw error;
             
-          const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-          );
-
-          const result = await Promise.race([profilePromise, timeout]) as any;
-          const profile = result?.data;
-          const error = result?.error;
-
-          if (error) {
-            console.error('[App] Profile fetch error:', error);
+            if (profile) {
+              console.log('[App] Background profile load successful. Balance:', profile.balance);
+              setUser(prev => prev ? { ...prev, balance: profile.balance } : null);
+            }
+          } catch (err) {
+            console.error('[App] Background profile fetch failed:', err);
           }
+        })();
 
-          const u: StoredUser = {
-            id: session.user.id,
-            name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
-            balance: profile?.balance ?? STARTING_BALANCE,
-          };
-          
-          console.log('[App] Profile processing complete. Balance:', u.balance);
-          setUser(u);
-          setScreen('lobby');
-        } catch (err) {
-          console.error('[App] Catch block error during profile fetch:', err);
-          // Fallback: Still let them in with default balance if we are sure they are signed in
-          const u: StoredUser = {
-            id: session.user.id,
-            name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
-            balance: STARTING_BALANCE,
-          };
-          setUser(u);
-          setScreen('lobby');
-        }
       } else if (event === 'SIGNED_OUT') {
         console.log('[App] User signed out');
         setUser(null);
