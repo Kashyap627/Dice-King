@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { type TableTier, TABLE_BETS, DICE_FACES, evaluateRoll, type DiceFace, MAX_NO_DOUBLES } from '@/lib/game/game';
+import { type TableTier, TABLE_BETS, DICE_FACES, evaluateRoll, type DiceFace, MAX_NO_DOUBLES, MIN_PLAYERS } from '@/lib/game/game';
 import {
   gameReducer,
   createInitialState,
@@ -69,7 +69,7 @@ export function useRealtimeRoom({
         }
       });
 
-      // Sort deterministically by user_id so all clients agree on the queue order
+      // Sort deterministically by user_id
       players.sort((a, b) => a.id.localeCompare(b.id));
 
       // Reassign seat indices after sort
@@ -146,71 +146,107 @@ export function useRealtimeRoom({
     });
   }, []);
 
-  // ─── Host: Start game when ≥2 players ───
+  // ─── Host: Start game when ≥ MIN_PLAYERS ───
   useEffect(() => {
-    if (isHost && state.phase === 'waiting' && state.players.length >= 2) {
+    if (isHost && state.phase === 'waiting' && state.players.length >= MIN_PLAYERS) {
       const timer = setTimeout(() => {
-        const firstRollerIdx = Math.floor(Math.random() * state.players.length);
-        broadcast({ type: 'GAME_STARTED', firstRollerIdx });
+        const firstRollerId = state.players[Math.floor(Math.random() * state.players.length)].id;
+        broadcast({ type: 'GAME_STARTED', firstRollerId });
       }, 2000);
       return () => clearTimeout(timer);
     }
   }, [isHost, state.phase, state.players.length, broadcast]);
 
+  // ─── Sync state for newcomers ───
+  useEffect(() => {
+    if (!isHost || state.phase === 'waiting') return;
+    
+    // Broadcast state to sync late joiners whenever player list changes
+    broadcast({ 
+      type: 'SYNC_STATE', 
+      state: {
+        phase: state.phase,
+        winnerId: state.winnerId,
+        queueIds: state.queueIds,
+        currentRollerId: state.currentRollerId,
+        currentRollerIsWinner: state.currentRollerIsWinner,
+        pot: state.pot,
+        potCollected: state.potCollected,
+        roundNum: state.roundNum,
+        die1: state.die1,
+        die2: state.die2,
+        diceOutcome: state.diceOutcome,
+        noDoubleCount: state.noDoubleCount
+      }
+    });
+  }, [state.players.length, isHost, broadcast]);
+
   // ─── Roll Dice ───
   const roll = useCallback(async () => {
     const s = stateRef.current;
+    console.log('Roll clicked. Phase:', s.phase, 'RollerId:', s.currentRollerId, 'UserId:', userId);
     if (s.phase !== 'playing' && s.phase !== 'result') return;
 
     // Determine who should roll
-    const rollerIdx = s.currentRollerIsWinner ? s.winnerIdx : s.queue[0];
-    if (rollerIdx === undefined) return;
-    const roller = s.players[rollerIdx];
-    if (!roller || roller.id !== userId) return;
+    const rollerId = s.currentRollerId;
+    if (!rollerId || rollerId !== userId) return;
+
+    const roller = s.players.find(p => p.id === rollerId);
+    if (!roller) return;
+
+    // Determine opponent
+    const opponentId = s.currentRollerIsWinner ? s.queueIds[0] : s.winnerId;
+    const opponent = s.players.find(p => p.id === opponentId);
+    console.log('OpponentId:', opponentId, 'OpponentFound:', !!opponent);
+    if (!opponent) return;
 
     // Collect bets first if not collected
     if (!s.potCollected) {
-      const pA = s.players[s.winnerIdx];
-      const pB = s.players[s.queue[0]];
-      if (!pA || !pB) return;
-
+      console.log('Collecting bets atomically...');
       try {
-        // Deduct from both players
-        const resultA = await supabase.rpc('deduct_balance', {
-          p_user_id: pA.id,
+        // Create a promise that rejects after 5 seconds
+        const timeout = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('RPC Timeout')), 5000)
+        );
+
+        const rpcPromise = supabase.rpc('sync_game_balances', {
+          p_roller_id: roller.id,
+          p_opponent_id: opponent.id,
           p_amount: s.betAmount,
-          p_label: `Bet vs ${pB.name}`,
-        });
-        const resultB = await supabase.rpc('deduct_balance', {
-          p_user_id: pB.id,
-          p_amount: s.betAmount,
-          p_label: `Bet vs ${pA.name}`,
+          p_label_roller: `Bet vs ${opponent.name}`,
+          p_label_opponent: `Bet vs ${roller.name}`,
+          p_room_id: null
         });
 
-        if (resultA.error || resultB.error) {
-          dispatch({ type: 'ADD_NOTIFICATION', msg: 'Failed to collect bets', notifType: 'info' });
+        // Race the RPC against the timeout
+        const { data, error } = await Promise.race([rpcPromise, timeout]) as any;
+
+        if (error) {
+          console.error('Balance sync RPC returned error:', error);
+          dispatch({ type: 'ADD_NOTIFICATION', msg: `Sync failed: ${error.message || 'Unauthorized'}`, notifType: 'info' });
           return;
         }
 
+        console.log('Balances synced successfully:', data);
         const pot = s.betAmount * 2;
         broadcast({ type: 'BETS_COLLECTED', pot });
 
-        // Update balances
-        if (resultA.data !== null) {
-          broadcast({ type: 'UPDATE_BALANCE', playerId: pA.id, newBalance: Number(resultA.data) });
-          if (pA.isMe) onBalanceChange?.(Number(resultA.data));
+        // Update balances for all participants in the result
+        if (Array.isArray(data)) {
+          data.forEach((res: { u_id: string; n_balance: number }) => {
+            broadcast({ type: 'UPDATE_BALANCE', playerId: res.u_id, newBalance: res.n_balance });
+            if (res.u_id === userId) onBalanceChange?.(res.n_balance);
+          });
         }
-        if (resultB.data !== null) {
-          broadcast({ type: 'UPDATE_BALANCE', playerId: pB.id, newBalance: Number(resultB.data) });
-          if (pB.isMe) onBalanceChange?.(Number(resultB.data));
-        }
-      } catch {
+      } catch (err) {
+        console.error('Error in collect_game_bets:', err);
         dispatch({ type: 'ADD_NOTIFICATION', msg: 'Error collecting bets', notifType: 'info' });
         return;
       }
     }
 
     // Roll dice
+    console.log('Broadcasting dice rolling...');
     broadcast({ type: 'DICE_ROLLING', rollerId: roller.id });
 
     // Wait for animation
@@ -228,17 +264,17 @@ export function useRealtimeRoom({
   const resolveRoll = useCallback(async (d1: DiceFace, d2: DiceFace) => {
     const s = stateRef.current;
     const outcome = evaluateRoll([d1, d2]);
-    const rollerIdx = s.currentRollerIsWinner ? s.winnerIdx : s.queue[0];
-    const oppIdx = s.currentRollerIsWinner ? s.queue[0] : s.winnerIdx;
+    const rollerId = s.currentRollerId;
+    const opponentId = s.currentRollerIsWinner ? s.queueIds[0] : s.winnerId;
 
-    if (rollerIdx === undefined || oppIdx === undefined) return;
+    if (!rollerId || !opponentId) return;
 
     if (outcome === 'win') {
       // Roller wins
-      await awardWin(rollerIdx, oppIdx, s);
+      await awardWin(rollerId, opponentId, s);
     } else if (outcome === 'loss') {
       // Roller loses — opponent wins
-      await awardWin(oppIdx, rollerIdx, s);
+      await awardWin(opponentId, rollerId, s);
     } else {
       // No double — swap roller
       const newNoDouble = s.noDoubleCount + 1;
@@ -246,7 +282,7 @@ export function useRealtimeRoom({
       if (newNoDouble >= MAX_NO_DOUBLES) {
         // Force roller wins after too many no-doubles
         broadcast({ type: 'ADD_NOTIFICATION', msg: `${MAX_NO_DOUBLES} no-doubles! Roller wins by default!`, notifType: 'win' });
-        await awardWin(rollerIdx, oppIdx, s);
+        await awardWin(rollerId, opponentId, s);
         return;
       }
 
@@ -255,44 +291,37 @@ export function useRealtimeRoom({
 
       // Auto-roll for next player after delay
       setTimeout(() => {
-        const latest = stateRef.current;
-        const nextRollerIdx = latest.currentRollerIsWinner ? latest.winnerIdx : latest.queue[0];
-        const nextRoller = latest.players[nextRollerIdx];
-        if (nextRoller && nextRoller.id === userId) {
-          // It's my turn — the UI will show the roll button
-          broadcast({ type: 'SET_PHASE', phase: 'playing' });
-        } else {
-          broadcast({ type: 'SET_PHASE', phase: 'playing' });
-        }
+        broadcast({ type: 'SET_PHASE', phase: 'playing' });
       }, 3000);
     }
   }, [userId, broadcast, onBalanceChange, roomId]);
 
   // ─── Award Win ───
-  const awardWin = useCallback(async (winnerIdx: number, loserIdx: number, s: MPGameState) => {
-    const winner = s.players[winnerIdx];
-    const loser = s.players[loserIdx];
+  const awardWin = useCallback(async (winnerId: string, loserId: string, s: MPGameState) => {
+    const winner = s.players.find(p => p.id === winnerId);
+    const loser = s.players.find(p => p.id === loserId);
     if (!winner || !loser) return;
 
     const winAmount = s.pot;
 
-    // Credit winner
+    // Resolve game win atomically
     try {
-      const result = await supabase.rpc('credit_balance', {
-        p_user_id: winner.id,
-        p_amount: winAmount,
+      const { data, error } = await supabase.rpc('resolve_game_win', {
+        p_winner_id: winner.id,
+        p_loser_id: loser.id,
+        p_win_amount: winAmount,
         p_label: `Won vs ${loser.name}`,
+        p_room_id: null
       });
-      if (result.data !== null) {
-        broadcast({ type: 'UPDATE_BALANCE', playerId: winner.id, newBalance: Number(result.data) });
-        if (winner.isMe) onBalanceChange?.(Number(result.data));
-      }
 
-      // Record game results
-      await supabase.rpc('record_game_result', { p_user_id: winner.id, p_won: true, p_earned: winAmount });
-      await supabase.rpc('record_game_result', { p_user_id: loser.id, p_won: false, p_earned: 0 });
-    } catch {
-      // continue anyway
+      if (error) {
+        console.error('Win resolution failed:', error);
+      } else if (data !== null) {
+        broadcast({ type: 'UPDATE_BALANCE', playerId: winner.id, newBalance: Number(data) });
+        if (winner.isMe) onBalanceChange?.(Number(data));
+      }
+    } catch (err) {
+      console.error('Error in resolve_game_win:', err);
     }
 
     broadcast({ type: 'ROUND_ENDED', winnerId: winner.id, loserId: loser.id, winAmount });
@@ -300,14 +329,19 @@ export function useRealtimeRoom({
 
     // Advance round after delay
     setTimeout(() => {
-      const newQueue = [...s.queue];
-      newQueue.shift();
-      newQueue.push(loserIdx);
+      const latest = stateRef.current;
+      const newQueue = [...latest.queueIds];
+      
+      // The winner becomes the champion and is removed from the queue
+      // The loser goes to the back of the queue
+      const filteredQueue = newQueue.filter(id => id !== winnerId && id !== loserId);
+      filteredQueue.push(loserId);
+
       broadcast({
         type: 'ROUND_ADVANCED',
-        winnerIdx,
-        queue: newQueue,
-        roundNum: s.roundNum + 1,
+        winnerId: winnerId,
+        queueIds: filteredQueue,
+        roundNum: latest.roundNum + 1,
       });
     }, 5000);
   }, [broadcast, roomId, onBalanceChange]);
@@ -334,11 +368,10 @@ export function useRealtimeRoom({
   }, []);
 
   // ─── Derived state ───
-  const currentRollerIdx = state.currentRollerIsWinner ? state.winnerIdx : state.queue[0];
-  const currentRoller = currentRollerIdx !== undefined ? state.players[currentRollerIdx] : null;
+  const currentRoller = state.players.find(p => p.id === state.currentRollerId) || null;
   const isMyTurn = currentRoller?.id === userId;
-  const winnerPlayer = state.winnerIdx !== undefined ? state.players[state.winnerIdx] : null;
-  const challengerPlayer = state.queue[0] !== undefined ? state.players[state.queue[0]] : null;
+  const winnerPlayer = state.players.find(p => p.id === state.winnerId) || null;
+  const challengerPlayer = state.players.find(p => p.id === state.queueIds[0]) || null;
 
   return {
     state,

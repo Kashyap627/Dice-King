@@ -17,8 +17,8 @@ export const TABLE_NAMES: Record<TableTier, string> = {
 
 export const MAX_NO_DOUBLES = 6;
 export const COUNTDOWN_SECONDS = 5;
-export const MIN_PLAYERS = 3;
-export const MAX_SEATS = 8;
+export const MIN_PLAYERS = 2;
+export const MAX_SEATS = 6;
 export const STARTING_BALANCE = 0;
 export const BOT_NAMES = [
   'Ravi Kumar', 'Priya Sharma', 'Arjun Patel', 'Sonia Mehta',

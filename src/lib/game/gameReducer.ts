@@ -1,4 +1,4 @@
-import { DICE_FACES, evaluateRoll, type DiceFace, type TableTier, TABLE_BETS, MAX_NO_DOUBLES } from './game';
+import { DICE_FACES, evaluateRoll, type DiceFace, type TableTier, TABLE_BETS, MAX_NO_DOUBLES, MAX_SEATS, MIN_PLAYERS } from './game';
 
 // ─── Multiplayer Game State ───
 export interface MPPlayer {
@@ -19,7 +19,7 @@ export interface MPSideBet {
 }
 
 export type MPPhase =
-  | 'waiting'     // waiting for ≥3 players
+  | 'waiting'     // waiting for ≥2 players
   | 'countdown'   // countdown before round starts
   | 'playing'     // active round — dice rolling
   | 'rolling'     // dice are physically rolling
@@ -32,8 +32,8 @@ export interface MPGameState {
   tableTier: TableTier;
   betAmount: number;
   // Round state
-  winnerIdx: number;        // current "champion" index in players[]
-  queue: number[];          // queue of challenger indices
+  winnerId: string | null;      // current "champion" ID
+  queueIds: string[];           // queue of challenger IDs
   currentRollerIsWinner: boolean;
   noDoubleCount: number;
   roundNum: number;
@@ -63,8 +63,8 @@ export function createInitialState(tableTier: TableTier): MPGameState {
     players: [],
     tableTier,
     betAmount: TABLE_BETS[tableTier],
-    winnerIdx: 0,
-    queue: [],
+    winnerId: null,
+    queueIds: [],
     currentRollerIsWinner: true,
     noDoubleCount: 0,
     roundNum: 0,
@@ -86,18 +86,19 @@ export function createInitialState(tableTier: TableTier): MPGameState {
 // ─── Actions ───
 export type GameAction =
   | { type: 'PLAYERS_UPDATED'; players: MPPlayer[] }
-  | { type: 'GAME_STARTED'; firstRollerIdx: number }
+  | { type: 'GAME_STARTED'; firstRollerId: string }
   | { type: 'BETS_COLLECTED'; pot: number }
   | { type: 'DICE_ROLLING'; rollerId: string }
   | { type: 'DICE_RESULT'; die1: DiceFace; die2: DiceFace; rollerId: string }
   | { type: 'ROUND_ENDED'; winnerId: string; loserId: string; winAmount: number }
-  | { type: 'ROUND_ADVANCED'; winnerIdx: number; queue: number[]; roundNum: number }
+  | { type: 'ROUND_ADVANCED'; winnerId: string; queueIds: string[]; roundNum: number }
   | { type: 'SIDE_BET_PLACED'; bet: MPSideBet }
   | { type: 'SIDE_BETS_RESOLVED'; results: { bettorId: string; won: boolean; amount: number }[] }
   | { type: 'SWAP_ROLLER' }
   | { type: 'SET_PHASE'; phase: MPPhase }
   | { type: 'ADD_NOTIFICATION'; msg: string; notifType: 'win' | 'loss' | 'bet' | 'info' }
   | { type: 'UPDATE_BALANCE'; playerId: string; newBalance: number }
+  | { type: 'SYNC_STATE'; state: Partial<MPGameState> }
   | { type: 'RESET_ROUND' };
 
 function addNotif(state: MPGameState, msg: string, notifType: 'win' | 'loss' | 'bet' | 'info'): MPGameState['notifications'] {
@@ -108,19 +109,72 @@ function addNotif(state: MPGameState, msg: string, notifType: 'win' | 'loss' | '
 
 export function gameReducer(state: MPGameState, action: GameAction): MPGameState {
   switch (action.type) {
+    case 'SYNC_STATE': {
+      return { 
+        ...state, 
+        ...action.state,
+        players: state.players // Maintain our local presence list
+      };
+    }
     case 'PLAYERS_UPDATED': {
-      return { ...state, players: action.players };
+      // Limit to 6 players in the state
+      const limitedPlayers = action.players.slice(0, MAX_SEATS);
+      const playerIds = limitedPlayers.map(p => p.id);
+
+      if (limitedPlayers.length < MIN_PLAYERS) {
+        return {
+          ...state,
+          phase: 'waiting',
+          players: limitedPlayers,
+          winnerId: null,
+          queueIds: [],
+          currentRollerId: null,
+        };
+      }
+
+      // If game is in progress, ensure new players are added to the end of the queue
+      let newQueueIds = [...state.queueIds];
+      if (state.phase !== 'waiting') {
+        // Find players who are in limitedPlayers but not in winnerId or queueIds
+        const activeIds = new Set([state.winnerId, ...state.queueIds]);
+        const newcomers = playerIds.filter(id => !activeIds.has(id));
+        newQueueIds = [...newQueueIds, ...newcomers];
+        
+        // Remove players who are no longer present
+        newQueueIds = newQueueIds.filter(id => playerIds.includes(id));
+      }
+
+      let nextWinnerId = state.winnerId && playerIds.includes(state.winnerId) 
+          ? state.winnerId 
+          : (newQueueIds.shift() || null);
+
+      // Safety check: if game is active but winnerId is lost, pick someone
+      if (state.phase !== 'waiting' && !nextWinnerId && playerIds.length > 0) {
+        nextWinnerId = playerIds[0];
+        newQueueIds = playerIds.filter(id => id !== nextWinnerId);
+      }
+
+      return { 
+        ...state, 
+        players: limitedPlayers,
+        queueIds: newQueueIds,
+        winnerId: nextWinnerId,
+        currentRollerId: (state.phase === 'playing' || state.phase === 'rolling' || state.phase === 'result')
+          ? (state.currentRollerIsWinner ? nextWinnerId : newQueueIds[0] || nextWinnerId)
+          : state.currentRollerId
+      };
     }
 
     case 'GAME_STARTED': {
       if (state.players.length < 2) return state;
-      const fIdx = action.firstRollerIdx % state.players.length;
-      const queue = state.players.map((_, i) => i).filter(i => i !== fIdx);
+      const winnerId = action.firstRollerId;
+      const queueIds = state.players.map(p => p.id).filter(id => id !== winnerId);
+      
       return {
         ...state,
         phase: 'playing',
-        winnerIdx: fIdx,
-        queue,
+        winnerId,
+        queueIds,
         currentRollerIsWinner: true,
         roundNum: 0,
         pot: 0,
@@ -131,7 +185,7 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
         diceOutcome: null,
         sideBets: [],
         sidePot: 0,
-        currentRollerId: state.players[fIdx]?.id || null,
+        currentRollerId: winnerId,
         notifications: addNotif(state, `Game started! ${state.players.length} players`, 'info'),
       };
     }
@@ -168,9 +222,11 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
     }
 
     case 'SWAP_ROLLER': {
+      const nextRollerId = state.currentRollerIsWinner ? state.queueIds[0] : state.winnerId;
       return {
         ...state,
         currentRollerIsWinner: !state.currentRollerIsWinner,
+        currentRollerId: nextRollerId || null,
         noDoubleCount: state.noDoubleCount + 1,
       };
     }
@@ -190,8 +246,8 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
       return {
         ...state,
         phase: 'playing',
-        winnerIdx: action.winnerIdx,
-        queue: action.queue,
+        winnerId: action.winnerId,
+        queueIds: action.queueIds,
         roundNum: action.roundNum,
         currentRollerIsWinner: true,
         noDoubleCount: 0,
@@ -205,7 +261,7 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
         lastWinnerId: null,
         lastLoserId: null,
         lastWinAmount: 0,
-        currentRollerId: state.players[action.winnerIdx]?.id || null,
+        currentRollerId: action.winnerId,
       };
     }
 

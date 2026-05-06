@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import type { TableTier, StoredUser } from '../lib/game/game';
-import { TABLE_BETS, TABLE_NAMES } from '../lib/game/game';
+import { TABLE_BETS, TABLE_NAMES, MIN_PLAYERS } from '../lib/game/game';
 import { useRealtimeRoom } from '../hooks/useRealtimeRoom';
 import Dice from './Dice';
 import Toast, { type ToastMessage } from './Toast';
@@ -183,7 +183,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
 
   // Render waiting room
   if (state.phase === 'waiting') {
-    const progress = (state.players.length / 2) * 100;
+    const progress = (state.players.length / MIN_PLAYERS) * 100;
     return (
       <div className="screen active" id="screen-game" style={{ display: 'flex', flexDirection: 'column' }}>
         <Toast toasts={toasts} />
@@ -241,9 +241,9 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                 </div>
               </div>
               <div className="waiting-title">Awaiting Players</div>
-              <div className="waiting-text">The table requires at least 2 players to begin.</div>
+              <div className="waiting-text">The table requires at least {MIN_PLAYERS} players to begin.</div>
               <div className="waiting-players">
-                {Array.from({ length: 2 }).map((_, i) => {
+                {Array.from({ length: MIN_PLAYERS }).map((_, i) => {
                   const p = state.players[i];
                   if (p) {
                     return (
@@ -264,7 +264,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
               </div>
               <div className="prog-track"><div className="prog-fill" style={{ width: `${progress}%` }}></div></div>
               <div style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: 'var(--text3)' }}>
-                {state.players.length} / 2 players
+                {state.players.length} / {MIN_PLAYERS} players
               </div>
             </div>
           </div>
@@ -356,17 +356,18 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                     {state.players.map((p) => {
                       const pos = playerAngles[p.id] || { x: 50, y: 50 };
                       
-                      const isRoller = currentRoller?.id === p.id;
-                      const isWinner = winnerPlayer?.id === p.id;
-                      const isChall = challengerPlayer?.id === p.id;
+                      const isRoller = state.currentRollerId === p.id;
+                      const isWinner = state.winnerId === p.id;
+                      const isChall = state.queueIds[0] === p.id;
                       const roleClass = isRoller && (state.phase === 'playing' || state.phase === 'rolling') ? 'rolling' : (isWinner || isChall) ? 'playing' : '';
                       const winnerClass = state.phase === 'between' && state.lastWinnerId === p.id ? 'winner-card' : state.phase === 'between' && state.lastLoserId === p.id ? 'loser-card' : '';
                       
-                      const qIdx = state.queue.findIndex(idx => state.players[idx]?.id === p.id);
+                      const qIdx = state.queueIds.indexOf(p.id);
                       let roleLabel = '';
                       if (isRoller) roleLabel = 'Rolling';
                       else if (isWinner || isChall) roleLabel = 'In Play';
-                      else roleLabel = `#${qIdx + 1}`;
+                      else if (qIdx >= 0) roleLabel = `#${qIdx + 1}`;
+                      else roleLabel = 'Watching';
 
                       return (
                         <div 
@@ -375,7 +376,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                           style={{ left: `${pos.x.toFixed(2)}%`, top: `${pos.y.toFixed(2)}%`, pointerEvents: 'auto' }}
                         >
                           <div className={`seat-card ${roleClass} ${winnerClass}`}>
-                            {qIdx >= 0 && <div className="queue-badge">{qIdx + 1}</div>}
+                            {qIdx >= 0 && !isChall && <div className="queue-badge">{qIdx + 1}</div>}
                             <div className="seat-av" style={{ backgroundColor: p.avatarColor }}>
                               {p.name.slice(0, 2).toUpperCase()}
                             </div>
@@ -397,7 +398,10 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
             <div className="table-controls">
               <button 
                 className="btn-roll" 
-                onClick={roll} 
+                onClick={() => {
+                  console.log('Button clicked in GameTable');
+                  roll();
+                }} 
                 disabled={!isMyTurn || state.phase === 'rolling' || state.phase === 'result'}
               >
                 ROLL THE DICE
