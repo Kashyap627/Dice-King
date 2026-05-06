@@ -60,8 +60,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           email,
           password,
           options: {
-            data: { display_name: name.trim() },
-            emailRedirectTo: window.location.origin
+            data: { display_name: name.trim() }
           }
         });
         
@@ -70,17 +69,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           throw signupError;
         }
         
-        console.log('[Auth] Sign up response:', data);
-        
-        if (data.session) {
-          console.log('[Auth] Sign up successful, session created');
-          setLoading(false);
-          // page.tsx will handle the SIGNED_IN event
-        } else {
-          console.log('[Auth] Sign up successful, verification required');
-          setMessage('Account created! Please check your email to verify your account before logging in.');
-          setLoading(false);
-        }
+        console.log('[Auth] Sign up successful. User:', data.user?.id);
+        // page.tsx will handle the SIGNED_IN event automatically
       } else {
         console.log('[Auth] Attempting sign in for:', email);
         const { data, error: signinError } = await supabase.auth.signInWithPassword({
