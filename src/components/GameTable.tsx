@@ -218,16 +218,18 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
 
   // ─── Countdown for Next Round ───
   useEffect(() => {
-    if (state.phase === 'between') {
+    let interval: NodeJS.Timeout;
+    if (personalOverlay || state.phase === 'between') {
+      // Start from 3 if we just entered or are about to
       setNextRoundCountdown(3);
-      const timer = setInterval(() => {
+      interval = setInterval(() => {
         setNextRoundCountdown(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
       }, 1000);
-      return () => clearInterval(timer);
     } else {
       setNextRoundCountdown(null);
     }
-  }, [state.phase]);
+    return () => clearInterval(interval);
+  }, [personalOverlay, state.phase]);
 
   const handleLeave = () => {
     leaveRoom();
@@ -532,37 +534,6 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
         </div>
       </div>
 
-      {/* OVERLAY */}
-      {state.phase === 'between' && state.lastWinnerId && (
-        <div className="overlay active">
-          {isMounted && state.lastWinnerId === user.id && (
-            <div className="confetti-container">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className="cpiece" 
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    backgroundColor: ['#f1c40f', '#e67e22', '#e74c3c', '#2ecc71', '#3498db'][Math.floor(Math.random() * 5)],
-                    width: `${5 + Math.random() * 8}px`,
-                    height: `${5 + Math.random() * 12}px`,
-                    animationDuration: `${1.5 + Math.random() * 2}s`,
-                    animationDelay: `${Math.random() * 0.5}s`
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          <div className="overlay-box" style={{ animation: 'pop-in 0.4s ease' }}>
-            <span className="overlay-icon">{state.lastWinnerId === user.id ? '👑' : '💸'}</span>
-            <div className={`overlay-title ${state.lastWinnerId === user.id ? 'result-win-msg' : 'result-lose-msg'}`}>
-              {state.lastWinnerId === user.id ? 'YOU WON' : 'ROUND ENDED'}
-            </div>
-            <div className="overlay-divider"></div>
-            <div className="overlay-amount">₹{state.lastWinAmount}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
