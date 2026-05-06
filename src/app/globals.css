@@ -1034,3 +1034,125 @@ input{font-family:'Lato',sans-serif;}
   40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
+
+/* ─── MOBILE UI OPTIMIZATIONS ─── */
+@media (max-width: 768px) {
+  .personal-overlay {
+    background: rgba(0,0,0,0.92);
+  }
+  
+  .overlay-title {
+    font-size: 32px;
+    letter-spacing: 6px;
+  }
+  
+  .overlay-amount {
+    font-size: 28px;
+  }
+  
+  .overlay-sub {
+    font-size: 14px;
+    padding: 0 40px;
+  }
+
+  .player-seat {
+    width: 60px;
+    height: 60px;
+  }
+
+  .seat-card {
+    width: 75px;
+    padding: 6px;
+  }
+
+  .seat-av {
+    width: 32px;
+    height: 32px;
+    font-size: 10px;
+  }
+
+  .seat-name {
+    font-size: 9px;
+  }
+
+  .seat-balance {
+    font-size: 8px;
+  }
+
+  .seat-stats {
+    font-size: 7px;
+    gap: 4px;
+  }
+
+  .seat-role {
+    font-size: 7px;
+    padding: 2px 4px;
+  }
+
+  .toast-container {
+    top: 60px;
+    width: 80%;
+    left: 10%;
+  }
+
+  .toast-msg {
+    font-size: 11px;
+    padding: 8px 16px;
+  }
+
+  .btn-roll {
+    bottom: 20px;
+    height: 50px;
+    font-size: 14px;
+  }
+}
+
+
+/* ─── WAITING ROOM MOBILE FIXES ─── */
+@media (max-width: 768px) {
+  .waiting-card {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+  
+  .searching-spinner {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 16px;
+  }
+  
+  .spinner-icon {
+    font-size: 24px;
+  }
+  
+  .waiting-title {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  
+  .waiting-subtitle {
+    font-size: 11px;
+    margin-bottom: 20px;
+  }
+  
+  .waiting-slots {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .waiting-slot {
+    padding: 10px;
+  }
+  
+  .slot-av {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+  
+  .slot-name {
+    font-size: 12px;
+  }
+}
+

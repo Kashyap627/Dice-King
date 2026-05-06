@@ -370,8 +370,6 @@ export function useRealtimeRoom({
       const latest = stateRef.current;
       const newQueue = [...latest.queueIds];
       
-      // The winner becomes the champion and is removed from the queue
-      // The loser goes to the back of the queue
       const filteredQueue = newQueue.filter(id => id !== winnerId && id !== loserId);
       filteredQueue.push(loserId);
 
@@ -381,7 +379,7 @@ export function useRealtimeRoom({
         queueIds: filteredQueue,
         roundNum: latest.roundNum + 1,
       });
-    }, 5000);
+    }, 3000);
   }, [broadcast, roomId, onBalanceChange]);
 
   // ─── Place Side Bet ───

@@ -48,6 +48,7 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
   const [isMounted, setIsMounted] = useState(false);
   const [personalOverlay, setPersonalOverlay] = useState<{ type: 'win' | 'loss', amount: number } | null>(null);
   const [isShaking, setIsShaking] = useState(false);
+  const [nextRoundCountdown, setNextRoundCountdown] = useState<number | null>(null);
   const feltRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -197,11 +198,11 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
         } else if (isLoser) {
           setPersonalOverlay({ type: 'loss', amount: state.betAmount });
           playLossTone();
-        } else {
+        } else if (!isWinner && !isLoser) {
           const winnerId = state.diceOutcome === 'win' ? rollerId : opponentId;
           const winner = state.players.find(p => p.id === winnerId);
           if (winner) {
-            setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' }]);
+            setToasts(prev => [...prev, { id: Date.now().toString(), msg: `${winner.name} won ₹${state.pot}!`, type: 'info' }].slice(-3));
           }
         }
       }, 2500);
@@ -214,6 +215,19 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
       };
     }
   }, [state.phase, state.diceOutcome, state.winnerId, state.pot, state.betAmount, user.id, state.currentRollerId, state.currentRollerIsWinner, state.queueIds, state.players]);
+
+  // ─── Countdown for Next Round ───
+  useEffect(() => {
+    if (state.phase === 'between') {
+      setNextRoundCountdown(3);
+      const timer = setInterval(() => {
+        setNextRoundCountdown(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setNextRoundCountdown(null);
+    }
+  }, [state.phase]);
 
   const handleLeave = () => {
     leaveRoom();
@@ -445,6 +459,11 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                   {personalOverlay.type === 'win' ? `+₹${personalOverlay.amount}` : `-₹${personalOverlay.amount}`}
                 </div>
                 <div className="overlay-sub">{personalOverlay.type === 'win' ? 'The table is yours!' : 'Better luck next roll.'}</div>
+                {nextRoundCountdown !== null && (
+                  <div className="overlay-timer" style={{ marginTop: 24, fontSize: 14, color: 'var(--gold2)', fontFamily: 'Cinzel, serif' }}>
+                    Next round in {nextRoundCountdown}s...
+                  </div>
+                )}
               </div>
             </div>
           )}
