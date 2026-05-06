@@ -33,6 +33,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     setMessage('');
     setLoading(true);
 
+    // Safety timeout: if login takes > 10s, reset loading
+    const timer = setTimeout(() => setLoading(false), 10000);
+
     try {
       if (mode === 'forgot') {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -45,7 +48,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
       if (mode === 'signup') {
         if (!name.trim()) throw new Error('Name is required');
-        const { data, error: signupError } = await supabase.auth.signUp({
+        const { error: signupError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -53,40 +56,23 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           }
         });
         if (signupError) throw signupError;
-        if (data.user) {
-          const user: StoredUser = {
-            id: data.user.id,
-            name: name.trim(),
-            balance: STARTING_BALANCE,
-          };
-          onLogin(user);
-        }
+        // page.tsx will handle the SIGNED_IN event
       } else {
-        const { data, error: signinError } = await supabase.auth.signInWithPassword({
+        const { error: signinError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signinError) throw signinError;
-        if (data.user) {
-          // Check profile balance
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('balance')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-          const user: StoredUser = {
-            id: data.user.id,
-            name: data.user.user_metadata?.display_name || data.user.email?.split('@')[0] || 'Player',
-            balance: profile?.balance || STARTING_BALANCE,
-          };
-          onLogin(user);
-        }
+        // page.tsx will handle the SIGNED_IN event
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
-    } finally {
       setLoading(false);
+    } finally {
+      clearTimeout(timer);
+      // We don't set loading to false here because if successful, 
+      // the page will redirect and this component will unmount.
+      // If there's an error, the catch block handles it.
     }
   }
 
