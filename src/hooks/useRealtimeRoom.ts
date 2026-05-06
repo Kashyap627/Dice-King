@@ -293,8 +293,8 @@ export function useRealtimeRoom({
 
     // Wait for animation
     setTimeout(() => {
-      const d1 = DICE_FACES[Math.floor(Math.random() * 4)] as DiceFace;
-      const d2 = DICE_FACES[Math.floor(Math.random() * 4)] as DiceFace;
+      const d1 = DICE_FACES[Math.floor(Math.random() * 6)] as DiceFace;
+      const d2 = DICE_FACES[Math.floor(Math.random() * 6)] as DiceFace;
       broadcast({ type: 'DICE_RESULT', die1: d1, die2: d2, rollerId: roller.id });
     }, 1800);
   }, [userId, roomId, broadcast, onBalanceChange]);

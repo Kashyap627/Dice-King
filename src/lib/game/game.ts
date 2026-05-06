@@ -1,4 +1,4 @@
-export const DICE_FACES = [1, 3, 4, 6] as const;
+export const DICE_FACES = [1, 2, 3, 4, 5, 6] as const;
 export type DiceFace = typeof DICE_FACES[number];
 
 export type TableTier = 'bronze' | 'silver' | 'gold' | 'vip';
@@ -90,8 +90,8 @@ export interface SideBetResult {
 }
 
 export function rollDice(): [DiceFace, DiceFace] {
-  const d1 = DICE_FACES[Math.floor(Math.random() * 4)];
-  const d2 = DICE_FACES[Math.floor(Math.random() * 4)];
+  const d1 = DICE_FACES[Math.floor(Math.random() * 6)];
+  const d2 = DICE_FACES[Math.floor(Math.random() * 6)];
   return [d1, d2];
 }
 

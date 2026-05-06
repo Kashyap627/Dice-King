@@ -273,6 +273,7 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
         ...state,
         phase: 'playing',
         winnerId: action.winnerId,
+        currentRollerId: action.winnerId,
         queueIds: action.queueIds,
         roundNum: action.roundNum,
         currentRollerIsWinner: true,
