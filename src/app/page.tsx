@@ -19,7 +19,7 @@ export default function DiceKingPage() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('balance')
+          .select('balance, wins, losses')
           .eq('id', session.user.id)
           .maybeSingle();
 
@@ -27,6 +27,8 @@ export default function DiceKingPage() {
           id: session.user.id,
           name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
           balance: profile?.balance || STARTING_BALANCE,
+          wins: profile?.wins || 0,
+          losses: profile?.losses || 0,
         };
         setUser(u);
         setScreen('lobby');
@@ -45,6 +47,8 @@ export default function DiceKingPage() {
           id: session.user.id,
           name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Player',
           balance: STARTING_BALANCE, // Temporary balance
+          wins: 0,
+          losses: 0,
         };
         setUser(tempUser);
         setScreen('lobby');
@@ -56,7 +60,7 @@ export default function DiceKingPage() {
             console.log('[App] Background profile fetch started...');
             const { data: profile, error } = await supabase
               .from('profiles')
-              .select('balance')
+              .select('balance, wins, losses')
               .eq('id', session.user.id)
               .maybeSingle();
 
@@ -66,7 +70,12 @@ export default function DiceKingPage() {
             
             if (profile) {
               console.log('[App] Background profile load successful. Balance:', profile.balance);
-              setUser(prev => prev ? { ...prev, balance: profile.balance } : null);
+              setUser(prev => prev ? { 
+                ...prev, 
+                balance: profile.balance || 0,
+                wins: profile.wins || 0,
+                losses: profile.losses || 0
+              } : null);
             } else {
               console.log('[App] No profile found for this user yet.');
             }

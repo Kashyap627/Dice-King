@@ -64,6 +64,8 @@ export function useRealtimeRoom({
             avatarColor: PLAYER_COLORS[seatIdx % PLAYER_COLORS.length],
             isMe: p.user_id === userId,
             seatIndex: seatIdx,
+            wins: p.wins || 0,
+            losses: p.losses || 0,
           });
           seatIdx++;
         }
@@ -113,6 +115,8 @@ export function useRealtimeRoom({
           user_id: userId,
           user_name: userName,
           balance: userBalance,
+          wins: user.wins || 0,
+          losses: user.losses || 0,
           online_at: new Date().toISOString(),
         });
       }
@@ -132,6 +136,8 @@ export function useRealtimeRoom({
         user_id: userId,
         user_name: userName,
         balance: userBalance,
+        wins: user.wins || 0,
+        losses: user.losses || 0,
         online_at: new Date().toISOString(),
       });
     }
@@ -180,6 +186,20 @@ export function useRealtimeRoom({
       }
     });
   }, [state.players.length, isHost, broadcast]);
+
+  // ─── Host: Authoritative Turn Resolution ───
+  useEffect(() => {
+    if (!isHost || state.phase !== 'result') return;
+
+    console.log('[Host] Result detected. Resolving roll in 2.5s...');
+    const timer = setTimeout(() => {
+      if (state.die1 && state.die2) {
+        resolveRoll(state.die1, state.die2);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [isHost, state.phase, state.die1, state.die2, resolveRoll]);
 
   // ─── Roll Dice ───
   const roll = useCallback(async () => {
@@ -254,9 +274,6 @@ export function useRealtimeRoom({
       const d1 = DICE_FACES[Math.floor(Math.random() * 4)] as DiceFace;
       const d2 = DICE_FACES[Math.floor(Math.random() * 4)] as DiceFace;
       broadcast({ type: 'DICE_RESULT', die1: d1, die2: d2, rollerId: roller.id });
-
-      // Resolve the roll
-      setTimeout(() => resolveRoll(d1, d2), 800);
     }, 1800);
   }, [userId, roomId, broadcast, onBalanceChange]);
 

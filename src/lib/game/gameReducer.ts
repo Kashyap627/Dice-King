@@ -8,6 +8,8 @@ export interface MPPlayer {
   avatarColor: string;
   isMe: boolean;
   seatIndex: number;
+  wins: number;
+  losses: number;
 }
 
 export interface MPSideBet {
@@ -246,13 +248,22 @@ export function gameReducer(state: MPGameState, action: GameAction): MPGameState
     }
 
     case 'ROUND_ENDED': {
+      const winner = state.players.find(p => p.id === action.winnerId);
+      const updatedPlayers = state.players.map(p => {
+        if (p.id === action.winnerId) return { ...p, wins: (p.wins || 0) + 1 };
+        if (p.id === action.loserId) return { ...p, losses: (p.losses || 0) + 1 };
+        return p;
+      });
+
       return {
         ...state,
         phase: 'between',
+        players: updatedPlayers,
         lastWinnerId: action.winnerId,
         lastLoserId: action.loserId,
         lastWinAmount: action.winAmount,
         pot: 0,
+        notifications: addNotif(state, `${winner?.name || 'Player'} wins the round! +₹${action.winAmount}`, 'win'),
       };
     }
 

@@ -382,6 +382,11 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
                             </div>
                             <div className="seat-name">{p.name}</div>
                             <div className="seat-balance">₹{p.balance}</div>
+                            <div className="seat-stats">
+                              <span style={{ color: '#6fcf97' }}>W: {p.wins}</span>
+                              <span style={{ margin: '0 4px', opacity: 0.3 }}>|</span>
+                              <span style={{ color: '#ff8a80' }}>L: {p.losses}</span>
+                            </div>
                             <div className={`seat-role ${isRoller ? 'role-rolling' : (isWinner || isChall) ? 'role-playing' : 'role-waiting'}`}>{roleLabel}</div>
                           </div>
                         </div>
@@ -415,6 +420,14 @@ export default function GameTable({ user, tableTier, onLeave, onUpdateBalance }:
 
         {/* SIDEBAR */}
         <div className="game-sidebar">
+          <div className="sidebar-section">
+            <div className="sidebar-title">Table Info</div>
+            <div className="info-display">
+              <div className="info-row"><span>Tier</span><span style={{ color: 'var(--gold2)', textTransform: 'capitalize' }}>{state.tableTier}</span></div>
+              <div className="info-row"><span>Entry Bet</span><span style={{ color: '#6fcf97' }}>₹{state.betAmount}</span></div>
+            </div>
+          </div>
+
           <div className="sidebar-section">
             <div className="sidebar-title">Pot</div>
             <div className="pot-display">

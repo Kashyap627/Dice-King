@@ -37,6 +37,8 @@ export interface Player {
   status: PlayerStatus;
   seatIndex: number | null; // seat 0..7 at the table
   avatarInitials: string;
+  wins: number;
+  losses: number;
 }
 
 export interface SideBet {
@@ -116,6 +118,8 @@ export interface StoredUser {
   id: string;
   name: string;
   balance: number;
+  wins?: number;
+  losses?: number;
 }
 
 export function loadUser(): StoredUser | null {
