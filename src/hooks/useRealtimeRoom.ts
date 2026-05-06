@@ -38,10 +38,11 @@ export function useRealtimeRoom({
 }: UseRealtimeRoomOptions) {
   const [state, dispatch] = useReducer(gameReducer, createInitialState(tableTier));
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const isHostRef = useRef(false);
+  const stateRef = useRef<MPGameState>(state);
+  const isHostRef = useRef<boolean>(false);
+  const resolvingRef = useRef<string | null>(null); // Track which roll we are resolving
   const [isHost, setIsHost] = useState(false);
   const playersRef = useRef<MPPlayer[]>([]);
-  const stateRef = useRef(state);
   stateRef.current = state;
 
   // Build presence key
@@ -344,13 +345,19 @@ export function useRealtimeRoom({
 
     // Resolve game win atomically
     try {
-      const { data, error } = await supabase.rpc('sync_game_win', {
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('RPC Timeout')), 5000)
+      );
+
+      const rpcPromise = supabase.rpc('sync_game_win', {
         p_winner_id: winner.id,
         p_loser_id: loser.id,
         p_win_amount: winAmount,
         p_label: `Won vs ${loser.name}`,
         p_room_id: null
       });
+
+      const { data, error } = await Promise.race([rpcPromise, timeout]) as any;
 
       if (error) {
         console.error('Win resolution RPC returned error:', error);
@@ -360,26 +367,27 @@ export function useRealtimeRoom({
       }
     } catch (err) {
       console.error('Error in sync_game_win:', err);
+    } finally {
+      // ALWAYS end the round even if DB fails
+      broadcast({ type: 'ROUND_ENDED', winnerId: winner.id, loserId: loser.id, winAmount });
+      broadcast({ type: 'ADD_NOTIFICATION', msg: `${winner.name} wins ₹${winAmount}!`, notifType: 'win' });
+
+      // Advance round after delay
+      setTimeout(() => {
+        const latest = stateRef.current;
+        const newQueue = [...latest.queueIds];
+        
+        const filteredQueue = newQueue.filter(id => id !== winnerId && id !== loserId);
+        filteredQueue.push(loserId);
+
+        broadcast({
+          type: 'ROUND_ADVANCED',
+          winnerId: winnerId,
+          queueIds: filteredQueue,
+          roundNum: latest.roundNum + 1,
+        });
+      }, 3000);
     }
-
-    broadcast({ type: 'ROUND_ENDED', winnerId: winner.id, loserId: loser.id, winAmount });
-    broadcast({ type: 'ADD_NOTIFICATION', msg: `${winner.name} wins ₹${winAmount}!`, notifType: 'win' });
-
-    // Advance round after delay
-    setTimeout(() => {
-      const latest = stateRef.current;
-      const newQueue = [...latest.queueIds];
-      
-      const filteredQueue = newQueue.filter(id => id !== winnerId && id !== loserId);
-      filteredQueue.push(loserId);
-
-      broadcast({
-        type: 'ROUND_ADVANCED',
-        winnerId: winnerId,
-        queueIds: filteredQueue,
-        roundNum: latest.roundNum + 1,
-      });
-    }, 3000);
   }, [broadcast, roomId, onBalanceChange]);
 
   // ─── Place Side Bet ───
@@ -408,17 +416,24 @@ export function useRealtimeRoom({
   const isMyTurn = currentRoller?.id === userId;
   // ─── Host: Authoritative Turn Resolution ───
   useEffect(() => {
-    if (!isHost || state.phase !== 'result') return;
+    if (!isHost || state.phase !== 'result' || !state.die1 || !state.die2) {
+      if (state.phase !== 'result') resolvingRef.current = null;
+      return;
+    }
 
-    console.log('[Host] Result detected. Resolving roll in 2.5s...');
+    const rollKey = `${state.die1}-${state.die2}-${state.currentRollerId}`;
+    if (resolvingRef.current === rollKey) return;
+
+    console.log('[Host] Result detected. Resolving roll:', rollKey);
     const timer = setTimeout(() => {
+      resolvingRef.current = rollKey;
       if (state.die1 && state.die2) {
         resolveRoll(state.die1, state.die2);
       }
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [isHost, state.phase, state.die1, state.die2, resolveRoll]);
+  }, [isHost, state.phase, state.die1, state.die2, state.currentRollerId, resolveRoll]);
 
   const winnerPlayer = state.players.find(p => p.id === state.winnerId) || null;
   const challengerPlayer = state.players.find(p => p.id === state.queueIds[0]) || null;
